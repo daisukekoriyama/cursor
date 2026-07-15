@@ -1,2 +1,1 @@
-# ＃ GitHub 練習
-
+＃　GitHub練習
