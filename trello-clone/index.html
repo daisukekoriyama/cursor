@@ -18,7 +18,9 @@
     <h2>未着手</h2>
     <div class="cards" data-list-id="todo"></div>
     <form class="add-card-form" data-list-id="todo">
-      <input type="text" placeholder="タスクを入力してEnter" required>
+      <input type="text" name="text" placeholder="タスクを入力してEnter" required>
+      <input type="date" name="due" class="due-input">
+      <button type="submit">追加</button>
     </form>
   </section>
 
@@ -26,7 +28,9 @@
     <h2>進行中</h2>
     <div class="cards" data-list-id="doing"></div>
     <form class="add-card-form" data-list-id="doing">
-      <input type="text" placeholder="タスクを入力してEnter" required>
+      <input type="text" name="text" placeholder="タスクを入力してEnter" required>
+      <input type="date" name="due" class="due-input">
+      <button type="submit">追加</button>
     </form>
   </section>
 
@@ -34,7 +38,9 @@
     <h2>完了</h2>
     <div class="cards" data-list-id="done"></div>
     <form class="add-card-form" data-list-id="done">
-      <input type="text" placeholder="タスクを入力してEnter" required>
+      <input type="text" name="text" placeholder="タスクを入力してEnter" required>
+      <input type="date" name="due" class="due-input">
+      <button type="submit">追加</button>
     </form>
   </section>
 
