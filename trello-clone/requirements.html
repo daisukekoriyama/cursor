@@ -1,0 +1,777 @@
+<title>タスクボード要件定義書</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Sans+JP:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #f3f4f7;
+    --surface: #ffffff;
+    --surface-2: #eceef2;
+    --ink: #171b26;
+    --muted: #5b6270;
+    --line: #dcdfe6;
+    --accent: #2f5fae;
+    --accent-soft: #e4eaf7;
+    --accent-ink: #ffffff;
+    --mono-bg: #eef0f4;
+    --done-color: #1f8a5f;
+    --done-soft: #e2f3ea;
+    --planned-color: #a86a12;
+    --planned-soft: #f6ecd9;
+    --out-color: #8a91a0;
+    --out-soft: #eceef2;
+    --shadow: 0 1px 2px rgba(23, 27, 38, 0.06), 0 8px 24px rgba(23, 27, 38, 0.05);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #12151d;
+      --surface: #191d28;
+      --surface-2: #212635;
+      --ink: #e8eaef;
+      --muted: #9aa1b2;
+      --line: #2b3040;
+      --accent: #85a6f2;
+      --accent-soft: #23304d;
+      --accent-ink: #0e1116;
+      --mono-bg: #1e2330;
+      --done-color: #55d39c;
+      --done-soft: #163427;
+      --planned-color: #e3ac4e;
+      --planned-soft: #3a2c12;
+      --out-color: #838a9a;
+      --out-soft: #212635;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #12151d;
+    --surface: #191d28;
+    --surface-2: #212635;
+    --ink: #e8eaef;
+    --muted: #9aa1b2;
+    --line: #2b3040;
+    --accent: #85a6f2;
+    --accent-soft: #23304d;
+    --accent-ink: #0e1116;
+    --mono-bg: #1e2330;
+    --done-color: #55d39c;
+    --done-soft: #163427;
+    --planned-color: #e3ac4e;
+    --planned-soft: #3a2c12;
+    --out-color: #838a9a;
+    --out-soft: #212635;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "IBM Plex Sans JP", "Hiragino Sans", sans-serif;
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 40px 20px 96px;
+  }
+
+  .mono {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+  }
+
+  /* ---------- cover ---------- */
+
+  .cover {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    box-shadow: var(--shadow);
+    padding: 40px clamp(20px, 5vw, 56px);
+    margin-bottom: 40px;
+  }
+
+  .cover .eyebrow {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 14px;
+  }
+
+  .cover h1 {
+    font-family: "Source Serif 4", serif;
+    font-weight: 700;
+    font-size: clamp(28px, 4.5vw, 40px);
+    line-height: 1.25;
+    margin: 0 0 20px;
+    text-wrap: balance;
+    max-width: 20ch;
+  }
+
+  .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 18px 32px;
+    padding-top: 22px;
+    border-top: 1px solid var(--line);
+  }
+
+  .meta-grid dt {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 4px;
+  }
+
+  .meta-grid dd {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 500;
+  }
+
+  /* ---------- layout: toc + content ---------- */
+
+  .layout {
+    display: grid;
+    grid-template-columns: 200px minmax(0, 1fr);
+    gap: 48px;
+    align-items: start;
+  }
+
+  nav.toc {
+    position: sticky;
+    top: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 13.5px;
+  }
+
+  nav.toc a {
+    color: var(--muted);
+    text-decoration: none;
+    padding: 7px 10px;
+    border-radius: 4px;
+    border-left: 2px solid transparent;
+  }
+
+  nav.toc a:hover,
+  nav.toc a:focus-visible {
+    color: var(--ink);
+    background: var(--surface-2);
+  }
+
+  nav.toc .toc-num {
+    font-family: "IBM Plex Mono", monospace;
+    color: var(--accent);
+    margin-right: 6px;
+  }
+
+  main.content {
+    min-width: 0;
+    max-width: 700px;
+  }
+
+  section.doc-section {
+    padding-top: 8px;
+    margin-bottom: 52px;
+    scroll-margin-top: 24px;
+  }
+
+  section.doc-section > h2 {
+    font-family: "Source Serif 4", serif;
+    font-size: 23px;
+    font-weight: 600;
+    margin: 0 0 18px;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    text-wrap: balance;
+  }
+
+  section.doc-section > h2 .num {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 15px;
+    color: var(--accent);
+  }
+
+  section.doc-section p {
+    margin: 0 0 14px;
+    max-width: 62ch;
+  }
+
+  section.doc-section h3 {
+    font-size: 15.5px;
+    font-weight: 700;
+    margin: 26px 0 10px;
+  }
+
+  .muted { color: var(--muted); }
+
+  /* ---------- glossary ---------- */
+
+  .glossary {
+    display: grid;
+    gap: 14px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .glossary li {
+    display: grid;
+    grid-template-columns: 96px 1fr;
+    gap: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .glossary dt {
+    font-weight: 700;
+    font-size: 14.5px;
+  }
+
+  .glossary dd {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14.5px;
+  }
+
+  /* ---------- requirement table ---------- */
+
+  .req-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .table-scroll {
+    overflow-x: auto;
+    border-radius: 4px;
+  }
+
+  .req-table th {
+    text-align: left;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: var(--surface-2);
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+  }
+
+  .req-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+
+  .req-table tr:last-child td { border-bottom: none; }
+
+  .req-id {
+    font-family: "IBM Plex Mono", monospace;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+
+  .pill {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .pill-must { background: var(--accent-soft); color: var(--accent); }
+  .pill-should { background: var(--surface-2); color: var(--ink); border: 1px solid var(--line); }
+  .pill-could { background: transparent; color: var(--muted); border: 1px dashed var(--line); }
+  .pill-wont { background: transparent; color: var(--out-color); }
+
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12.5px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .status::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex: none;
+  }
+
+  .status-done { color: var(--done-color); }
+  .status-done::before { background: var(--done-color); }
+  .status-planned { color: var(--planned-color); }
+  .status-planned::before { background: var(--planned-color); }
+  .status-out { color: var(--out-color); }
+  .status-out::before { background: var(--out-color); }
+
+  /* ---------- nfr list ---------- */
+
+  .nfr-list {
+    display: grid;
+    gap: 12px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .nfr-list li {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 14px 16px;
+    display: grid;
+    grid-template-columns: 130px 1fr;
+    gap: 14px;
+    font-size: 14px;
+  }
+
+  .nfr-list .label {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* ---------- code block ---------- */
+
+  pre.code-block {
+    background: var(--mono-bg);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 18px 20px;
+    overflow-x: auto;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    margin: 0 0 14px;
+  }
+
+  .structure-tree {
+    background: var(--mono-bg);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 18px 20px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 13px;
+    line-height: 1.9;
+    margin: 0 0 14px;
+  }
+
+  .structure-tree .c { color: var(--muted); }
+
+  /* ---------- scope columns ---------- */
+
+  .scope-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .scope-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 18px 20px;
+  }
+
+  .scope-card h3 {
+    margin: 0 0 12px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .scope-card h3::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  .scope-card.in h3::before { background: var(--done-color); }
+  .scope-card.out h3::before { background: var(--out-color); }
+
+  .scope-card ul {
+    margin: 0;
+    padding-left: 18px;
+    font-size: 14px;
+    color: var(--muted);
+    display: grid;
+    gap: 8px;
+  }
+
+  /* ---------- roadmap ---------- */
+
+  .roadmap {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0;
+  }
+
+  .roadmap li {
+    display: grid;
+    grid-template-columns: 32px 1fr;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .roadmap li:last-child { border-bottom: none; }
+
+  .roadmap .step-num {
+    font-family: "IBM Plex Mono", monospace;
+    color: var(--accent);
+    font-size: 14px;
+    padding-top: 1px;
+  }
+
+  .roadmap .step-title {
+    font-weight: 700;
+    font-size: 14.5px;
+    margin: 0 0 3px;
+  }
+
+  .roadmap .step-desc {
+    margin: 0;
+    font-size: 13.5px;
+    color: var(--muted);
+  }
+
+  footer.doc-footer {
+    max-width: 700px;
+    margin-left: auto;
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+    font-size: 12.5px;
+    color: var(--muted);
+    font-family: "IBM Plex Mono", monospace;
+  }
+
+  @media (max-width: 760px) {
+    .layout { grid-template-columns: 1fr; gap: 24px; }
+    nav.toc {
+      position: static;
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--line);
+    }
+    nav.toc a {
+      border: 1px solid var(--line);
+      border-left: 1px solid var(--line);
+    }
+    main.content { max-width: 100%; }
+    .scope-grid { grid-template-columns: 1fr; }
+    .glossary li, .nfr-list li { grid-template-columns: 1fr; gap: 4px; }
+    footer.doc-footer { margin-left: 0; max-width: 100%; }
+  }
+</style>
+
+<div class="page">
+
+  <div class="cover">
+    <p class="eyebrow">要件定義書 &middot; REQUIREMENTS</p>
+    <h1>タスクボードアプリ 要件定義書</h1>
+    <dl class="meta-grid">
+      <div>
+        <dt>文書番号</dt>
+        <dd class="mono">TB-REQ-001</dd>
+      </div>
+      <div>
+        <dt>バージョン</dt>
+        <dd>v0.1(MVPドラフト)</dd>
+      </div>
+      <div>
+        <dt>作成日</dt>
+        <dd>2026-09-11</dd>
+      </div>
+      <div>
+        <dt>作成者</dt>
+        <dd>daisukekoriyama</dd>
+      </div>
+      <div>
+        <dt>ステータス</dt>
+        <dd>レビュー中</dd>
+      </div>
+    </dl>
+  </div>
+
+  <div class="layout">
+    <nav class="toc">
+      <a href="#purpose"><span class="toc-num">1</span>目的・背景</a>
+      <a href="#scope"><span class="toc-num">2</span>スコープ</a>
+      <a href="#glossary"><span class="toc-num">3</span>用語定義</a>
+      <a href="#users"><span class="toc-num">4</span>対象ユーザー</a>
+      <a href="#functional"><span class="toc-num">5</span>機能要件</a>
+      <a href="#nonfunctional"><span class="toc-num">6</span>非機能要件</a>
+      <a href="#screens"><span class="toc-num">7</span>画面構成</a>
+      <a href="#datamodel"><span class="toc-num">8</span>データモデル</a>
+      <a href="#constraints"><span class="toc-num">9</span>制約・前提</a>
+      <a href="#roadmap"><span class="toc-num">10</span>今後の拡張</a>
+    </nav>
+
+    <main class="content">
+
+      <section class="doc-section" id="purpose">
+        <h2><span class="num">1.</span>目的・背景</h2>
+        <p>IT系講座の課題として、Trello風のタスク管理アプリを個人開発する。目的はツールとしての完成度そのものよりも、<strong>要件定義 → 実装 → Gitでのバージョン管理</strong>という一連の開発の流れを体験し、身につけることにある。</p>
+        <p>今回はすでに最小構成(MVP)のプロトタイプを先行して実装済み。本書はその実装内容を振り返って要件として言語化し、今後の拡張の土台とするために作成する。</p>
+      </section>
+
+      <section class="doc-section" id="scope">
+        <h2><span class="num">2.</span>スコープ</h2>
+        <p>初回リリース(v0.1)で対応する範囲と、あえて対応しない範囲を明確にする。</p>
+        <div class="scope-grid">
+          <div class="scope-card in">
+            <h3>対応する</h3>
+            <ul>
+              <li>3つの固定リスト(未着手/進行中/完了)でのタスク管理</li>
+              <li>カードの追加・削除</li>
+              <li>ドラッグ&ドロップによるリスト間移動</li>
+              <li>ブラウザ内へのデータ保存(localStorage)</li>
+            </ul>
+          </div>
+          <div class="scope-card out">
+            <h3>対応しない(今回)</h3>
+            <ul>
+              <li>ユーザー登録・ログイン</li>
+              <li>サーバーへの保存・複数端末同期</li>
+              <li>複数ボードの作成</li>
+              <li>リストの追加・編集</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="doc-section" id="glossary">
+        <h2><span class="num">3.</span>用語定義</h2>
+        <dl class="glossary">
+          <li>
+            <dt>ボード</dt>
+            <dd>タスク管理画面全体を指す最上位の単位。今回は1つのボードのみ存在する。</dd>
+          </li>
+          <li>
+            <dt>リスト</dt>
+            <dd>進捗ステータスごとの列。「未着手」「進行中」「完了」の3種で固定。</dd>
+          </li>
+          <li>
+            <dt>カード</dt>
+            <dd>1件のタスクを表す最小単位。テキストのみを持ち、いずれか1つのリストに属する。</dd>
+          </li>
+        </dl>
+      </section>
+
+      <section class="doc-section" id="users">
+        <h2><span class="num">4.</span>対象ユーザー</h2>
+        <p>作成者本人による、個人の学習・日々のタスク管理での利用を想定する。チームでの共有や複数人での同時利用は想定しない。</p>
+      </section>
+
+      <section class="doc-section" id="functional">
+        <h2><span class="num">5.</span>機能要件</h2>
+        <p>MoSCoW方式で優先度を整理する。<span class="mono">Must</span>は実装済み(v0.1)、<span class="mono">Should</span>/<span class="mono">Could</span>は今後の対応候補。</p>
+        <div class="table-scroll">
+          <table class="req-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>要件</th>
+                <th>優先度</th>
+                <th>状態</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="req-id">REQ-01</td>
+                <td>入力欄にテキストを入力し、カードを追加できる</td>
+                <td><span class="pill pill-must">Must</span></td>
+                <td><span class="status status-done">実装済み</span></td>
+              </tr>
+              <tr>
+                <td class="req-id">REQ-02</td>
+                <td>カードの「×」ボタンで削除できる</td>
+                <td><span class="pill pill-must">Must</span></td>
+                <td><span class="status status-done">実装済み</span></td>
+              </tr>
+              <tr>
+                <td class="req-id">REQ-03</td>
+                <td>カードをドラッグして別のリストへ移動できる</td>
+                <td><span class="pill pill-must">Must</span></td>
+                <td><span class="status status-done">実装済み</span></td>
+              </tr>
+              <tr>
+                <td class="req-id">REQ-04</td>
+                <td>データをlocalStorageに保存し、リロード後も保持する</td>
+                <td><span class="pill pill-must">Must</span></td>
+                <td><span class="status status-done">実装済み</span></td>
+              </tr>
+              <tr>
+                <td class="req-id">REQ-05</td>
+                <td>リストの追加・名称変更・削除ができる</td>
+                <td><span class="pill pill-should">Should</span></td>
+                <td><span class="status status-planned">未実装</span></td>
+              </tr>
+              <tr>
+                <td class="req-id">REQ-06</td>
+                <td>カードの内容編集・期限・メモを追加できる</td>
+                <td><span class="pill pill-should">Should</span></td>
+                <td><span class="status status-planned">未実装</span></td>
+              </tr>
+              <tr>
+                <td class="req-id">REQ-07</td>
+                <td>同一リスト内でカードを並び替えられる</td>
+                <td><span class="pill pill-could">Could</span></td>
+                <td><span class="status status-planned">未実装</span></td>
+              </tr>
+              <tr>
+                <td class="req-id">REQ-08</td>
+                <td>複数ボードを作成・切り替えできる</td>
+                <td><span class="pill pill-could">Could</span></td>
+                <td><span class="status status-planned">未実装</span></td>
+              </tr>
+              <tr>
+                <td class="req-id">REQ-09</td>
+                <td>ユーザー登録・ログイン</td>
+                <td><span class="pill pill-wont">Won&rsquo;t(今回)</span></td>
+                <td><span class="status status-out">対象外</span></td>
+              </tr>
+              <tr>
+                <td class="req-id">REQ-10</td>
+                <td>サーバー保存による複数端末同期</td>
+                <td><span class="pill pill-wont">Won&rsquo;t(今回)</span></td>
+                <td><span class="status status-out">対象外</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="doc-section" id="nonfunctional">
+        <h2><span class="num">6.</span>非機能要件</h2>
+        <ul class="nfr-list">
+          <li>
+            <span class="label">対応環境</span>
+            <span>最新版のChrome / Safari / Firefoxなど、モダンブラウザで動作すること</span>
+          </li>
+          <li>
+            <span class="label">環境構築</span>
+            <span>サーバー不要。index.htmlをブラウザで開くだけで動作すること</span>
+          </li>
+          <li>
+            <span class="label">パフォーマンス</span>
+            <span>カード数十〜数百件程度で操作にもたつきがないこと</span>
+          </li>
+          <li>
+            <span class="label">データ永続性の範囲</span>
+            <span>同一ブラウザ・同一端末内でのみ保持される(localStorageの制約による)</span>
+          </li>
+          <li>
+            <span class="label">操作性</span>
+            <span>マウス・トラックパッドでのドラッグ&ドロップに対応すること。キーボードのみでの操作は範囲外</span>
+          </li>
+        </ul>
+      </section>
+
+      <section class="doc-section" id="screens">
+        <h2><span class="num">7.</span>画面構成</h2>
+        <p>画面は単一ページで構成し、ヘッダーと3列のボードのみを持つシンプルな構造とする。</p>
+        <div class="structure-tree"><span class="c">header</span>
+&nbsp;&nbsp;h1 &quot;タスクボード&quot;
+
+<span class="c">main.board</span>
+&nbsp;&nbsp;section.list [未着手]
+&nbsp;&nbsp;&nbsp;&nbsp;h2, div.cards, form.add-card-form
+&nbsp;&nbsp;section.list [進行中]
+&nbsp;&nbsp;&nbsp;&nbsp;h2, div.cards, form.add-card-form
+&nbsp;&nbsp;section.list [完了]
+&nbsp;&nbsp;&nbsp;&nbsp;h2, div.cards, form.add-card-form</div>
+        <p class="muted">各リストは同一構造(見出し・カード一覧・追加フォーム)を持ち、<span class="mono">data-list-id</span>属性でどのリストかを識別する。</p>
+      </section>
+
+      <section class="doc-section" id="datamodel">
+        <h2><span class="num">8.</span>データモデル</h2>
+        <p>状態は1つのオブジェクトで管理し、リストIDをキーにカード文字列の配列を持つ。配列内の順序がそのまま表示順になる。</p>
+        <pre class="code-block">{
+  "todo":  ["要件定義書を読む", "GitHubにpushする"],
+  "doing": ["トレロ風アプリの実装"],
+  "done":  ["ghコマンドのインストール", "gh auth loginの設定"]
+}</pre>
+        <p class="muted">この状態は <span class="mono">localStorage["trello-clone-data"]</span> にJSON文字列として保存される。</p>
+      </section>
+
+      <section class="doc-section" id="constraints">
+        <h2><span class="num">9.</span>制約・前提</h2>
+        <ul class="nfr-list" style="grid-template-columns: 1fr;">
+          <li style="grid-template-columns: 1fr;">バックエンド・データベースを持たないため、ブラウザのデータを消去するとタスクも失われる</li>
+          <li style="grid-template-columns: 1fr;">認証機能がないため、同じ端末・ブラウザを使う人であれば誰でも閲覧・編集できる</li>
+          <li style="grid-template-columns: 1fr;">別のブラウザ・別の端末からは同じデータを参照できない</li>
+        </ul>
+      </section>
+
+      <section class="doc-section" id="roadmap">
+        <h2><span class="num">10.</span>今後の拡張候補</h2>
+        <p>優先度が高いと考えられる順に、次の開発ステップの候補を挙げる。</p>
+        <ol class="roadmap">
+          <li>
+            <span class="step-num">01</span>
+            <div>
+              <p class="step-title">リストの編集機能(REQ-05)</p>
+              <p class="step-desc">リストの追加・名称変更・削除に対応し、固定3列の制約をなくす。</p>
+            </div>
+          </li>
+          <li>
+            <span class="step-num">02</span>
+            <div>
+              <p class="step-title">カード編集機能(REQ-06)</p>
+              <p class="step-desc">カード内容の編集、期限・メモの追加に対応する。</p>
+            </div>
+          </li>
+          <li>
+            <span class="step-num">03</span>
+            <div>
+              <p class="step-title">同一リスト内の並び替え(REQ-07)</p>
+              <p class="step-desc">リスト内でのカードの順序をドラッグで変更できるようにする。</p>
+            </div>
+          </li>
+          <li>
+            <span class="step-num">04</span>
+            <div>
+              <p class="step-title">バックエンド化の検討</p>
+              <p class="step-desc">複数端末での同期や共有が必要になった場合、サーバー・DBを持つ構成へ移行する。</p>
+            </div>
+          </li>
+        </ol>
+      </section>
+
+    </main>
+  </div>
+
+  <footer class="doc-footer">TB-REQ-001 &middot; v0.1 &middot; 2026-09-11</footer>
+
+</div>

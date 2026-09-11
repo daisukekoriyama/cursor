@@ -1,0 +1,96 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, "Hiragino Sans", sans-serif;
+  background: #0d5b8c;
+  color: #172b4d;
+}
+
+header {
+  padding: 16px 24px;
+}
+
+header h1 {
+  margin: 0;
+  color: #fff;
+  font-size: 20px;
+}
+
+.board {
+  display: flex;
+  gap: 16px;
+  padding: 0 24px 24px;
+  align-items: flex-start;
+  overflow-x: auto;
+}
+
+.list {
+  background: #ebecf0;
+  border-radius: 8px;
+  width: 260px;
+  flex: 0 0 260px;
+  padding: 8px;
+}
+
+.list h2 {
+  font-size: 14px;
+  margin: 4px 8px 12px;
+}
+
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 8px;
+}
+
+.card {
+  background: #fff;
+  border-radius: 4px;
+  padding: 8px 10px;
+  box-shadow: 0 1px 0 rgba(9, 30, 66, 0.25);
+  cursor: grab;
+  font-size: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.card.dragging {
+  opacity: 0.4;
+}
+
+.card .delete-btn {
+  border: none;
+  background: transparent;
+  color: #6b778c;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 2px 4px;
+}
+
+.card .delete-btn:hover {
+  color: #c0392b;
+}
+
+.cards.drag-over {
+  background: #d6dae0;
+  border-radius: 4px;
+}
+
+.add-card-form {
+  margin-top: 8px;
+}
+
+.add-card-form input {
+  width: 100%;
+  padding: 8px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+}
