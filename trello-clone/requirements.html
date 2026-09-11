@@ -506,10 +506,14 @@
       </div>
       <div>
         <dt>バージョン</dt>
-        <dd>v0.1(MVPドラフト)</dd>
+        <dd>v0.2</dd>
       </div>
       <div>
         <dt>作成日</dt>
+        <dd>2026-09-11</dd>
+      </div>
+      <div>
+        <dt>更新日</dt>
         <dd>2026-09-11</dd>
       </div>
       <div>
@@ -553,8 +557,11 @@
             <h3>対応する</h3>
             <ul>
               <li>3つの固定リスト(未着手/進行中/完了)でのタスク管理</li>
-              <li>カードの追加・削除</li>
+              <li>カードの追加・削除・編集(テキスト・期限)</li>
               <li>ドラッグ&ドロップによるリスト間移動</li>
+              <li>期限に基づく自動並び替え</li>
+              <li>カード内のチェックリスト(小項目)</li>
+              <li>チェックで完了リストへ自動移動、終了日の記録</li>
               <li>ブラウザ内へのデータ保存(localStorage)</li>
             </ul>
           </div>
@@ -565,6 +572,7 @@
               <li>サーバーへの保存・複数端末同期</li>
               <li>複数ボードの作成</li>
               <li>リストの追加・編集</li>
+              <li>同一リスト内でのカードの手動並び替え</li>
             </ul>
           </div>
         </div>
@@ -583,7 +591,15 @@
           </li>
           <li>
             <dt>カード</dt>
-            <dd>1件のタスクを表す最小単位。テキストのみを持ち、いずれか1つのリストに属する。</dd>
+            <dd>1件のタスクを表す最小単位。テキスト・期限・小項目・終了日を持ち、いずれか1つのリストに属する。</dd>
+          </li>
+          <li>
+            <dt>小項目</dt>
+            <dd>カードの中にぶら下がるチェックリストの1項目。テキストと完了フラグを持つ(カード自体とは別に完了・未完了を管理できる)。</dd>
+          </li>
+          <li>
+            <dt>終了日</dt>
+            <dd>カードが「完了」リストに入った日付。チェックボックスで完了させた日、またはドラッグで完了リストへ移動した日が自動で記録される。</dd>
           </li>
         </dl>
       </section>
@@ -639,30 +655,54 @@
               </tr>
               <tr>
                 <td class="req-id">REQ-06</td>
-                <td>カードの内容編集・期限・メモを追加できる</td>
+                <td>カードのテキスト・期限をあとから編集できる</td>
                 <td><span class="pill pill-should">Should</span></td>
-                <td><span class="status status-planned">未実装</span></td>
+                <td><span class="status status-done">実装済み</span></td>
               </tr>
               <tr>
                 <td class="req-id">REQ-07</td>
-                <td>同一リスト内でカードを並び替えられる</td>
+                <td>各リスト内でカードが期限の早い順に自動で並ぶ(期限なしは末尾)</td>
+                <td><span class="pill pill-should">Should</span></td>
+                <td><span class="status status-done">実装済み</span></td>
+              </tr>
+              <tr>
+                <td class="req-id">REQ-08</td>
+                <td>カードの中にチェックリスト(小項目)を追加・完了・削除できる</td>
+                <td><span class="pill pill-should">Should</span></td>
+                <td><span class="status status-done">実装済み</span></td>
+              </tr>
+              <tr>
+                <td class="req-id">REQ-09</td>
+                <td>未着手・進行中のカードにチェックを入れると、自動で完了リストへ移動する</td>
+                <td><span class="pill pill-should">Should</span></td>
+                <td><span class="status status-done">実装済み</span></td>
+              </tr>
+              <tr>
+                <td class="req-id">REQ-10</td>
+                <td>完了リストでは期限の代わりに終了日(完了した日付)を表示する</td>
+                <td><span class="pill pill-should">Should</span></td>
+                <td><span class="status status-done">実装済み</span></td>
+              </tr>
+              <tr>
+                <td class="req-id">REQ-11</td>
+                <td>同一リスト内でカードを手動で並び替えられる</td>
                 <td><span class="pill pill-could">Could</span></td>
                 <td><span class="status status-planned">未実装</span></td>
               </tr>
               <tr>
-                <td class="req-id">REQ-08</td>
+                <td class="req-id">REQ-12</td>
                 <td>複数ボードを作成・切り替えできる</td>
                 <td><span class="pill pill-could">Could</span></td>
                 <td><span class="status status-planned">未実装</span></td>
               </tr>
               <tr>
-                <td class="req-id">REQ-09</td>
+                <td class="req-id">REQ-13</td>
                 <td>ユーザー登録・ログイン</td>
                 <td><span class="pill pill-wont">Won&rsquo;t(今回)</span></td>
                 <td><span class="status status-out">対象外</span></td>
               </tr>
               <tr>
-                <td class="req-id">REQ-10</td>
+                <td class="req-id">REQ-14</td>
                 <td>サーバー保存による複数端末同期</td>
                 <td><span class="pill pill-wont">Won&rsquo;t(今回)</span></td>
                 <td><span class="status status-out">対象外</span></td>
@@ -705,24 +745,47 @@
 &nbsp;&nbsp;h1 &quot;タスクボード&quot;
 
 <span class="c">main.board</span>
-&nbsp;&nbsp;section.list [未着手]
-&nbsp;&nbsp;&nbsp;&nbsp;h2, div.cards, form.add-card-form
-&nbsp;&nbsp;section.list [進行中]
-&nbsp;&nbsp;&nbsp;&nbsp;h2, div.cards, form.add-card-form
-&nbsp;&nbsp;section.list [完了]
-&nbsp;&nbsp;&nbsp;&nbsp;h2, div.cards, form.add-card-form</div>
-        <p class="muted">各リストは同一構造(見出し・カード一覧・追加フォーム)を持ち、<span class="mono">data-list-id</span>属性でどのリストかを識別する。</p>
+&nbsp;&nbsp;section.list [未着手 / 進行中 / 完了]
+&nbsp;&nbsp;&nbsp;&nbsp;h2
+&nbsp;&nbsp;&nbsp;&nbsp;div.cards
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;div.card &times; N
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;due-badge <span class="c">(期限 or 終了日)</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;complete-checkbox <span class="c">(未着手・進行中のみ)</span> + card-text
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;subtasks <span class="c">(進捗・チェックリスト・小項目追加フォーム)</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;edit-btn(&#9998;) / delete-btn(&times;)
+&nbsp;&nbsp;&nbsp;&nbsp;form.add-card-form
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;text入力 &#8594; due入力 &#8594; 追加ボタン</div>
+        <p class="muted">各リストは同一構造(見出し・カード一覧・追加フォーム)を持ち、<span class="mono">data-list-id</span>属性でどのリストかを識別する。編集ボタンを押すとカードがその場で編集フォームに切り替わる。</p>
       </section>
 
       <section class="doc-section" id="datamodel">
         <h2><span class="num">8.</span>データモデル</h2>
-        <p>状態は1つのオブジェクトで管理し、リストIDをキーにカード文字列の配列を持つ。配列内の順序がそのまま表示順になる。</p>
+        <p>状態は1つのオブジェクトで管理し、リストIDをキーにカードオブジェクトの配列を持つ。表示順は配列の順序ではなく、描画のたびに期限(<span class="mono">due</span>)の早い順で並び替えて決まる。</p>
         <pre class="code-block">{
-  "todo":  ["要件定義書を読む", "GitHubにpushする"],
-  "doing": ["トレロ風アプリの実装"],
-  "done":  ["ghコマンドのインストール", "gh auth loginの設定"]
+  "todo": [
+    {
+      "text": "要件定義書を読む",
+      "due": "2026-09-15",
+      "subtasks": [
+        { "text": "5章まで読む", "done": true },
+        { "text": "コメントを書く", "done": false }
+      ],
+      "completedAt": ""
+    }
+  ],
+  "doing": [
+    { "text": "トレロ風アプリの実装", "due": "", "subtasks": [], "completedAt": "" }
+  ],
+  "done": [
+    {
+      "text": "ghコマンドのインストール",
+      "due": "",
+      "subtasks": [],
+      "completedAt": "2026-09-11"
+    }
+  ]
 }</pre>
-        <p class="muted">この状態は <span class="mono">localStorage["trello-clone-data"]</span> にJSON文字列として保存される。</p>
+        <p class="muted">この状態は <span class="mono">localStorage["trello-clone-data"]</span> にJSON文字列として保存される。<span class="mono">completedAt</span>は「完了」リストに入った日付で、完了チェックまたはドラッグでの移動時に自動で設定される。</p>
       </section>
 
       <section class="doc-section" id="constraints">
@@ -748,15 +811,15 @@
           <li>
             <span class="step-num">02</span>
             <div>
-              <p class="step-title">カード編集機能(REQ-06)</p>
-              <p class="step-desc">カード内容の編集、期限・メモの追加に対応する。</p>
+              <p class="step-title">同一リスト内の手動並び替え(REQ-11)</p>
+              <p class="step-desc">現在は期限順に自動で並ぶ仕様のため、同じ期限のカードや期限なしのカードを自由な順序でドラッグ並び替えできるようにする。</p>
             </div>
           </li>
           <li>
             <span class="step-num">03</span>
             <div>
-              <p class="step-title">同一リスト内の並び替え(REQ-07)</p>
-              <p class="step-desc">リスト内でのカードの順序をドラッグで変更できるようにする。</p>
+              <p class="step-title">複数ボードの管理(REQ-12)</p>
+              <p class="step-desc">用途別にボードを分けて作成・切り替えできるようにする。</p>
             </div>
           </li>
           <li>
@@ -772,6 +835,6 @@
     </main>
   </div>
 
-  <footer class="doc-footer">TB-REQ-001 &middot; v0.1 &middot; 2026-09-11</footer>
+  <footer class="doc-footer">TB-REQ-001 &middot; v0.2 &middot; 2026-09-11</footer>
 
 </div>
