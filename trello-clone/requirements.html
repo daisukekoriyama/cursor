@@ -513,7 +513,7 @@
       </div>
       <div>
         <dt>バージョン</dt>
-        <dd>v0.5</dd>
+        <dd>v0.6</dd>
       </div>
       <div>
         <dt>作成日</dt>
@@ -549,6 +549,8 @@
       <a href="#constraints"><span class="toc-num">11</span>制約・前提</a>
       <a href="#risks"><span class="toc-num">12</span>リスクと対応策</a>
       <a href="#roadmap"><span class="toc-num">13</span>今後の拡張</a>
+      <a href="#kpi"><span class="toc-num">14</span>KPI・成功指標</a>
+      <a href="#changelog"><span class="toc-num">15</span>改訂履歴</a>
     </nav>
 
     <main class="content">
@@ -1233,10 +1235,105 @@ subtasks
         </ol>
       </section>
 
+      <section class="doc-section" id="kpi">
+        <h2><span class="num">14.</span>KPI・成功指標</h2>
+        <p>本プロジェクトの目的(1章)は「ツールとしての完成度」よりも「要件定義 → 実装 → Gitでのバージョン管理」という開発の流れを身につけることにある。そのため、KPIも機能の完成度だけでなく、この開発プロセスをどれだけ実践できたかを中心に定義する。</p>
+        <div class="table-scroll">
+          <table class="req-table">
+            <thead>
+              <tr>
+                <th>指標</th>
+                <th>目標・達成基準</th>
+                <th>測定方法</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>機能要件の実装率</td>
+                <td>Must系は100%、Should系は80%以上を実装する</td>
+                <td>6章REQ表の状態(実装済み/未実装)を集計する</td>
+              </tr>
+              <tr>
+                <td>受け入れ基準の充足確認</td>
+                <td>実装済みREQについて、対応する受け入れ基準を実際に操作して満たしていることを確認する</td>
+                <td>6章の受け入れ基準を1件ずつ手動でなぞり、結果を記録する</td>
+              </tr>
+              <tr>
+                <td>要件定義書の改訂サイクル経験</td>
+                <td>実装内容に応じて要件定義書を複数回改訂し、コードとドキュメントを同期させる</td>
+                <td>15章の改訂履歴に記録されたバージョン数</td>
+              </tr>
+              <tr>
+                <td>Gitでの意味のある単位のコミット</td>
+                <td>1コミットが1つの論理的な変更(1機能・1修正)に対応している</td>
+                <td><span class="mono">git log</span> でコミット単位と粒度を振り返る</td>
+              </tr>
+              <tr>
+                <td>フロントエンドからバックエンドまでの到達度</td>
+                <td>10章で設計したAPI・DBスキーマを、実際にバックエンド実装まで到達させる(REQ-14)</td>
+                <td>REQ-14のステータスが「実装済み」になっているか</td>
+              </tr>
+              <tr>
+                <td>AIとの協働開発プロセスの実践</td>
+                <td>要件定義・設計・実装の各段階でAIを壁打ち相手として活用し、自分で意思決定する経験を積む</td>
+                <td>各章の内容について、AIの提案をそのまま採用せず、質問・修正を経て確定させた回数(定性的に振り返る)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="doc-section" id="changelog">
+        <h2><span class="num">15.</span>改訂履歴</h2>
+        <div class="table-scroll">
+          <table class="req-table">
+            <thead>
+              <tr>
+                <th>version</th>
+                <th>日付</th>
+                <th>変更内容</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="mono">v0.1</td>
+                <td class="mono">2026-09-11</td>
+                <td>MVP実装(3つの固定リスト、カードの追加・削除、ドラッグ&ドロップ、localStorage保存)。この時点では要件定義書は未作成</td>
+              </tr>
+              <tr>
+                <td class="mono">v0.2</td>
+                <td class="mono">2026-09-11</td>
+                <td>実装済みの機能を振り返り、要件定義書の初版を作成(目的・スコープ・用語定義・機能要件・非機能要件・画面構成・データモデル・制約・今後の拡張候補)</td>
+              </tr>
+              <tr>
+                <td class="mono">v0.3</td>
+                <td class="mono">2026-09-15</td>
+                <td>ステークホルダー、ユースケース(ユーザーストーリー・基本業務フロー)を追加</td>
+              </tr>
+              <tr>
+                <td class="mono">v0.4</td>
+                <td class="mono">2026-09-15</td>
+                <td>機能要件表に受け入れ基準列を追加。非機能要件をIPA非機能要求グレード準拠の6分類に再編(セキュリティ観点を新規追加)。リスクと対応策を追加</td>
+              </tr>
+              <tr>
+                <td class="mono">v0.5</td>
+                <td class="mono">2026-09-15</td>
+                <td>画面/状態遷移図を追加。データモデルにboards/lists/cards構造の拡張案を追加。バックエンド・API設計(DBスキーマ・RESTエンドポイント)を新設し、REQ-14(サーバー保存)をスコープに追加</td>
+              </tr>
+              <tr>
+                <td class="mono">v0.6</td>
+                <td class="mono">2026-09-15</td>
+                <td>KPI・成功指標(学習プロセス重視)、改訂履歴セクションを追加</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
     </main>
   </div>
 
-  <footer class="doc-footer">TB-REQ-001 &middot; v0.5 &middot; 2026-09-15</footer>
+  <footer class="doc-footer">TB-REQ-001 &middot; v0.6 &middot; 2026-09-15</footer>
 
 </div>
 
