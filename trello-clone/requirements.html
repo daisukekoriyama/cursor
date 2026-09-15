@@ -1,3 +1,8 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>タスクボード要件定義書</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Sans+JP:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
@@ -493,6 +498,8 @@
     footer.doc-footer { margin-left: 0; max-width: 100%; }
   }
 </style>
+</head>
+<body>
 
 <div class="page">
 
@@ -506,7 +513,7 @@
       </div>
       <div>
         <dt>バージョン</dt>
-        <dd>v0.2</dd>
+        <dd>v0.5</dd>
       </div>
       <div>
         <dt>作成日</dt>
@@ -514,7 +521,7 @@
       </div>
       <div>
         <dt>更新日</dt>
-        <dd>2026-09-11</dd>
+        <dd>2026-09-15</dd>
       </div>
       <div>
         <dt>作成者</dt>
@@ -532,13 +539,16 @@
       <a href="#purpose"><span class="toc-num">1</span>目的・背景</a>
       <a href="#scope"><span class="toc-num">2</span>スコープ</a>
       <a href="#glossary"><span class="toc-num">3</span>用語定義</a>
-      <a href="#users"><span class="toc-num">4</span>対象ユーザー</a>
-      <a href="#functional"><span class="toc-num">5</span>機能要件</a>
-      <a href="#nonfunctional"><span class="toc-num">6</span>非機能要件</a>
-      <a href="#screens"><span class="toc-num">7</span>画面構成</a>
-      <a href="#datamodel"><span class="toc-num">8</span>データモデル</a>
-      <a href="#constraints"><span class="toc-num">9</span>制約・前提</a>
-      <a href="#roadmap"><span class="toc-num">10</span>今後の拡張</a>
+      <a href="#usecases"><span class="toc-num">4</span>ユースケース</a>
+      <a href="#stakeholders"><span class="toc-num">5</span>ステークホルダー</a>
+      <a href="#functional"><span class="toc-num">6</span>機能要件</a>
+      <a href="#nonfunctional"><span class="toc-num">7</span>非機能要件</a>
+      <a href="#screens"><span class="toc-num">8</span>画面構成</a>
+      <a href="#datamodel"><span class="toc-num">9</span>データモデル</a>
+      <a href="#backend"><span class="toc-num">10</span>バックエンド・API設計</a>
+      <a href="#constraints"><span class="toc-num">11</span>制約・前提</a>
+      <a href="#risks"><span class="toc-num">12</span>リスクと対応策</a>
+      <a href="#roadmap"><span class="toc-num">13</span>今後の拡張</a>
     </nav>
 
     <main class="content">
@@ -551,7 +561,7 @@
 
       <section class="doc-section" id="scope">
         <h2><span class="num">2.</span>スコープ</h2>
-        <p>初回リリース(v0.1)で対応する範囲と、あえて対応しない範囲を明確にする。</p>
+        <p>対応する範囲と、あえて対応しない範囲を明確にする。3つの固定リストでのタスク管理〜ローカル保存まではv0.1で実装済み。サーバー(DB)へのデータ保存は今後実装予定の範囲として、対応する側に含める。</p>
         <div class="scope-grid">
           <div class="scope-card in">
             <h3>対応する</h3>
@@ -563,13 +573,14 @@
               <li>カード内のチェックリスト(小項目)</li>
               <li>チェックで完了リストへ自動移動、終了日の記録</li>
               <li>ブラウザ内へのデータ保存(localStorage)</li>
+              <li>サーバー(DB)へのデータ保存(認証なし・単一ユーザー想定)</li>
             </ul>
           </div>
           <div class="scope-card out">
             <h3>対応しない(今回)</h3>
             <ul>
               <li>ユーザー登録・ログイン</li>
-              <li>サーバーへの保存・複数端末同期</li>
+              <li>複数ユーザーでの共有・権限管理</li>
               <li>複数ボードの作成</li>
               <li>リストの追加・編集</li>
               <li>同一リスト内でのカードの手動並び替え</li>
@@ -604,13 +615,147 @@
         </dl>
       </section>
 
-      <section class="doc-section" id="users">
-        <h2><span class="num">4.</span>対象ユーザー</h2>
-        <p>作成者本人による、個人の学習・日々のタスク管理での利用を想定する。チームでの共有や複数人での同時利用は想定しない。</p>
+      <section class="doc-section" id="usecases">
+        <h2><span class="num">4.</span>ユースケース</h2>
+        <p>機能要件(5章)を導出する元となる、利用者の行動をユーザーストーリー形式で整理する。「〜として、〜したい、なぜなら〜だから」の形で、各機能要件(REQ)がどの行動から生まれたかを対応づける。</p>
+        <div class="table-scroll">
+          <table class="req-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>ユーザーストーリー</th>
+                <th>関連REQ</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="req-id">UC-01</td>
+                <td>利用者として、思いついたタスクをすぐに追加したい。なぜなら忘れる前に記録しておきたいから</td>
+                <td class="req-id">REQ-01</td>
+              </tr>
+              <tr>
+                <td class="req-id">UC-02</td>
+                <td>利用者として、不要になったタスクを削除したい。なぜなら一覧を整理された状態に保ちたいから</td>
+                <td class="req-id">REQ-02</td>
+              </tr>
+              <tr>
+                <td class="req-id">UC-03</td>
+                <td>利用者として、タスクの進捗に応じてカードを別のリストへ移動したい。なぜなら今どの段階かひと目で把握したいから</td>
+                <td class="req-id">REQ-03</td>
+              </tr>
+              <tr>
+                <td class="req-id">UC-04</td>
+                <td>利用者として、ブラウザを閉じても入力したタスクが消えないでほしい。なぜなら毎回入力し直すのは非効率だから</td>
+                <td class="req-id">REQ-04</td>
+              </tr>
+              <tr>
+                <td class="req-id">UC-05</td>
+                <td>利用者として、タスクの内容や期限をあとから修正したい。なぜなら予定変更はよくあるから</td>
+                <td class="req-id">REQ-06</td>
+              </tr>
+              <tr>
+                <td class="req-id">UC-06</td>
+                <td>利用者として、期限が近いタスクから順に見たい。なぜなら優先度の高いものを見落としたくないから</td>
+                <td class="req-id">REQ-07</td>
+              </tr>
+              <tr>
+                <td class="req-id">UC-07</td>
+                <td>利用者として、大きなタスクを小項目に分けて管理したい。なぜなら細かい進捗も追いたいから</td>
+                <td class="req-id">REQ-08</td>
+              </tr>
+              <tr>
+                <td class="req-id">UC-08</td>
+                <td>利用者として、チェックを入れるだけで完了リストに移動してほしい。なぜなら手動移動の手間を省きたいから</td>
+                <td class="req-id">REQ-09</td>
+              </tr>
+              <tr>
+                <td class="req-id">UC-09</td>
+                <td>利用者として、完了リストではいつ終わらせたかを確認したい。なぜなら自分の作業ペースを振り返りたいから</td>
+                <td class="req-id">REQ-10</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>基本業務フロー</h3>
+        <ol class="roadmap">
+          <li>
+            <span class="step-num">01</span>
+            <div>
+              <p class="step-title">タスク追加</p>
+              <p class="step-desc">「未着手」リストにタスクを入力し、必要であれば期限を設定する</p>
+            </div>
+          </li>
+          <li>
+            <span class="step-num">02</span>
+            <div>
+              <p class="step-title">進行中へ移動</p>
+              <p class="step-desc">着手したタスクを「進行中」リストへドラッグする</p>
+            </div>
+          </li>
+          <li>
+            <span class="step-num">03</span>
+            <div>
+              <p class="step-title">小項目でチェック</p>
+              <p class="step-desc">タスクを分解した小項目を追加し、完了したものからチェックしていく</p>
+            </div>
+          </li>
+          <li>
+            <span class="step-num">04</span>
+            <div>
+              <p class="step-title">完了チェック</p>
+              <p class="step-desc">タスク全体が終わったら完了チェックボックスにチェックを入れる</p>
+            </div>
+          </li>
+          <li>
+            <span class="step-num">05</span>
+            <div>
+              <p class="step-title">完了リストへ自動移動</p>
+              <p class="step-desc">チェックと同時に「完了」リストへ自動で移動し、終了日が記録される</p>
+            </div>
+          </li>
+        </ol>
+      </section>
+
+      <section class="doc-section" id="stakeholders">
+        <h2><span class="num">5.</span>ステークホルダー</h2>
+        <p>本プロジェクトは作成者本人による個人開発だが、実務の役割分担を疑似体験する目的で、以下のように役割を分けて整理する。講師への提出・承認プロセスは存在せず、AI(Claude Code)を開発パートナーとして活用しながら各役割を1人で兼務する。</p>
+        <div class="table-scroll">
+          <table class="req-table">
+            <thead>
+              <tr>
+                <th>役割</th>
+                <th>担当</th>
+                <th>責任範囲</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>プロダクトオーナー(発注者)</td>
+                <td>daisukekoriyama(本人)</td>
+                <td>何を作るか意思決定する。要件の優先度を決める</td>
+              </tr>
+              <tr>
+                <td>開発者</td>
+                <td>daisukekoriyama(本人)+ AI(Claude Code)</td>
+                <td>要件を実装に落とし込む。AIとペアプログラミング的に進める</td>
+              </tr>
+              <tr>
+                <td>利用者</td>
+                <td>daisukekoriyama(本人)</td>
+                <td>実際に日々のタスク管理でアプリを使う</td>
+              </tr>
+              <tr>
+                <td>レビュアー/承認者</td>
+                <td>daisukekoriyama(本人、セルフレビュー)</td>
+                <td>実装が要件を満たしているか確認する</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <section class="doc-section" id="functional">
-        <h2><span class="num">5.</span>機能要件</h2>
+        <h2><span class="num">6.</span>機能要件</h2>
         <p>MoSCoW方式で優先度を整理する。<span class="mono">Must</span>は実装済み(v0.1)、<span class="mono">Should</span>/<span class="mono">Could</span>は今後の対応候補。</p>
         <div class="table-scroll">
           <table class="req-table">
@@ -620,6 +765,7 @@
                 <th>要件</th>
                 <th>優先度</th>
                 <th>状態</th>
+                <th>受け入れ基準</th>
               </tr>
             </thead>
             <tbody>
@@ -628,84 +774,98 @@
                 <td>入力欄にテキストを入力し、カードを追加できる</td>
                 <td><span class="pill pill-must">Must</span></td>
                 <td><span class="status status-done">実装済み</span></td>
+                <td>入力欄にテキストを入力して送信すると、「未着手」リストの末尾にカードが表示される。空文字では追加されない</td>
               </tr>
               <tr>
                 <td class="req-id">REQ-02</td>
                 <td>カードの「×」ボタンで削除できる</td>
                 <td><span class="pill pill-must">Must</span></td>
                 <td><span class="status status-done">実装済み</span></td>
+                <td>削除ボタンを押すと、確認なしで即座にカードが一覧から消え、再読み込みしても復活しない</td>
               </tr>
               <tr>
                 <td class="req-id">REQ-03</td>
                 <td>カードをドラッグして別のリストへ移動できる</td>
                 <td><span class="pill pill-must">Must</span></td>
                 <td><span class="status status-done">実装済み</span></td>
+                <td>カードを別リストの枠内へドラッグ&ドロップすると、元のリストから消え、移動先リストの末尾に表示される</td>
               </tr>
               <tr>
                 <td class="req-id">REQ-04</td>
                 <td>データをlocalStorageに保存し、リロード後も保持する</td>
                 <td><span class="pill pill-must">Must</span></td>
                 <td><span class="status status-done">実装済み</span></td>
+                <td>カードの追加・編集・削除・移動のいずれかの操作後にページを再読み込みしても、直前の状態がそのまま復元される</td>
               </tr>
               <tr>
                 <td class="req-id">REQ-05</td>
                 <td>リストの追加・名称変更・削除ができる</td>
                 <td><span class="pill pill-should">Should</span></td>
                 <td><span class="status status-planned">未実装</span></td>
+                <td>「リスト追加」操作で新しい空リストが末尾に作成できる。既存リストの名称を変更でき、削除するとリスト内のカードごと一覧から消える(削除時は確認を挟む)</td>
               </tr>
               <tr>
                 <td class="req-id">REQ-06</td>
                 <td>カードのテキスト・期限をあとから編集できる</td>
                 <td><span class="pill pill-should">Should</span></td>
                 <td><span class="status status-done">実装済み</span></td>
+                <td>編集ボタンでカードが編集フォームに切り替わり、保存すると新しいテキスト・期限が反映される。空文字では保存できない</td>
               </tr>
               <tr>
                 <td class="req-id">REQ-07</td>
                 <td>各リスト内でカードが期限の早い順に自動で並ぶ(期限なしは末尾)</td>
                 <td><span class="pill pill-should">Should</span></td>
                 <td><span class="status status-done">実装済み</span></td>
+                <td>期限が設定されているカードは期限の昇順で並び、期限未設定のカードは末尾にまとめて表示される</td>
               </tr>
               <tr>
                 <td class="req-id">REQ-08</td>
                 <td>カードの中にチェックリスト(小項目)を追加・完了・削除できる</td>
                 <td><span class="pill pill-should">Should</span></td>
                 <td><span class="status status-done">実装済み</span></td>
+                <td>小項目を入力して追加すると一覧に表示され、チェックで完了状態(取り消し線)になり、削除ボタンで一覧から消える</td>
               </tr>
               <tr>
                 <td class="req-id">REQ-09</td>
                 <td>未着手・進行中のカードにチェックを入れると、自動で完了リストへ移動する</td>
                 <td><span class="pill pill-should">Should</span></td>
                 <td><span class="status status-done">実装済み</span></td>
+                <td>「未着手」「進行中」のカードで完了チェックボックスにチェックを入れると、即座に「完了」リストへ移動し、元のリストから消える</td>
               </tr>
               <tr>
                 <td class="req-id">REQ-10</td>
                 <td>完了リストでは期限の代わりに終了日(完了した日付)を表示する</td>
                 <td><span class="pill pill-should">Should</span></td>
                 <td><span class="status status-done">実装済み</span></td>
+                <td>「完了」リストのカードには期限バッジの代わりに「終了日 ◯/◯」が表示され、完了した日付と一致する</td>
               </tr>
               <tr>
                 <td class="req-id">REQ-11</td>
                 <td>同一リスト内でカードを手動で並び替えられる</td>
                 <td><span class="pill pill-could">Could</span></td>
                 <td><span class="status status-planned">未実装</span></td>
+                <td>同一リスト内でカードをドラッグして任意の位置に挿入でき、その並び順が再読み込み後も保持される</td>
               </tr>
               <tr>
                 <td class="req-id">REQ-12</td>
                 <td>複数ボードを作成・切り替えできる</td>
                 <td><span class="pill pill-could">Could</span></td>
                 <td><span class="status status-planned">未実装</span></td>
+                <td>新規ボードを作成でき、ボード切り替え操作で表示されるカード一覧がボードごとに独立している(片方の操作がもう片方に影響しない)</td>
               </tr>
               <tr>
                 <td class="req-id">REQ-13</td>
                 <td>ユーザー登録・ログイン</td>
                 <td><span class="pill pill-wont">Won&rsquo;t(今回)</span></td>
                 <td><span class="status status-out">対象外</span></td>
+                <td class="muted">対象外のため受け入れ基準なし</td>
               </tr>
               <tr>
                 <td class="req-id">REQ-14</td>
-                <td>サーバー保存による複数端末同期</td>
-                <td><span class="pill pill-wont">Won&rsquo;t(今回)</span></td>
-                <td><span class="status status-out">対象外</span></td>
+                <td>サーバー(DB)にデータを保存し、複数端末から同じデータを参照・編集できる(認証なし・単一ユーザー想定)</td>
+                <td><span class="pill pill-should">Should</span></td>
+                <td><span class="status status-planned">未実装</span></td>
+                <td>ある端末でカードを追加・編集・削除・移動したあと、別端末で同じURLを開くと、その変更結果が反映されている</td>
               </tr>
             </tbody>
           </table>
@@ -713,24 +873,71 @@
       </section>
 
       <section class="doc-section" id="nonfunctional">
-        <h2><span class="num">6.</span>非機能要件</h2>
+        <h2><span class="num">7.</span>非機能要件</h2>
+        <p>IPA非機能要求グレードの分類を参考に、6つの観点で整理する。</p>
+
+        <h3>可用性</h3>
+        <ul class="nfr-list">
+          <li>
+            <span class="label">動作環境</span>
+            <span>サーバー不要。index.htmlをブラウザで開くだけで動作すること</span>
+          </li>
+          <li>
+            <span class="label">データ永続性の範囲</span>
+            <span>同一ブラウザ・同一端末内でのみ保持される(localStorageの制約による)。サーバー障害による停止は起こり得ない構成とする</span>
+          </li>
+        </ul>
+
+        <h3>性能・拡張性</h3>
+        <ul class="nfr-list">
+          <li>
+            <span class="label">パフォーマンス</span>
+            <span>カード数十〜数百件程度で操作にもたつきがないこと</span>
+          </li>
+          <li>
+            <span class="label">拡張性</span>
+            <span>リストやボードの追加(REQ-05, REQ-12)など、今後の機能追加に耐えられるデータ構造とすること</span>
+          </li>
+        </ul>
+
+        <h3>運用・保守性</h3>
+        <ul class="nfr-list">
+          <li>
+            <span class="label">環境構築</span>
+            <span>npmなどのビルドツールに依存せず、HTML・CSS・JSのみで完結すること。導入コストをゼロに保つ</span>
+          </li>
+          <li>
+            <span class="label">コードの可読性</span>
+            <span>1機能=1関数を基本とし、コメントなしでも処理内容が追える命名・構造にすること</span>
+          </li>
+        </ul>
+
+        <h3>移行性(互換性)</h3>
         <ul class="nfr-list">
           <li>
             <span class="label">対応環境</span>
             <span>最新版のChrome / Safari / Firefoxなど、モダンブラウザで動作すること</span>
           </li>
           <li>
-            <span class="label">環境構築</span>
-            <span>サーバー不要。index.htmlをブラウザで開くだけで動作すること</span>
+            <span class="label">データ形式</span>
+            <span>localStorageに保存するデータはJSON形式とし、将来サーバー保存へ移行する際にそのまま流用できる構造にすること</span>
+          </li>
+        </ul>
+
+        <h3>セキュリティ</h3>
+        <ul class="nfr-list">
+          <li>
+            <span class="label">入力値の扱い</span>
+            <span>カードのテキストはDOM APIで挿入し、HTMLとして解釈させない(XSS対策)。<span class="mono">innerHTML</span>へのユーザー入力の直接挿入は行わない</span>
           </li>
           <li>
-            <span class="label">パフォーマンス</span>
-            <span>カード数十〜数百件程度で操作にもたつきがないこと</span>
+            <span class="label">アクセス制御</span>
+            <span>認証機能を持たないため、同じ端末・ブラウザを利用できる人は誰でも閲覧・編集できる(REQ-13は対象外のため、これはリスクとして許容する)</span>
           </li>
-          <li>
-            <span class="label">データ永続性の範囲</span>
-            <span>同一ブラウザ・同一端末内でのみ保持される(localStorageの制約による)</span>
-          </li>
+        </ul>
+
+        <h3>ユーザビリティ</h3>
+        <ul class="nfr-list">
           <li>
             <span class="label">操作性</span>
             <span>マウス・トラックパッドでのドラッグ&ドロップに対応すること。キーボードのみでの操作は範囲外</span>
@@ -739,7 +946,7 @@
       </section>
 
       <section class="doc-section" id="screens">
-        <h2><span class="num">7.</span>画面構成</h2>
+        <h2><span class="num">8.</span>画面構成</h2>
         <p>画面は単一ページで構成し、ヘッダーと3列のボードのみを持つシンプルな構造とする。</p>
         <div class="structure-tree"><span class="c">header</span>
 &nbsp;&nbsp;h1 &quot;タスクボード&quot;
@@ -756,10 +963,52 @@
 &nbsp;&nbsp;&nbsp;&nbsp;form.add-card-form
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;text入力 &#8594; due入力 &#8594; 追加ボタン</div>
         <p class="muted">各リストは同一構造(見出し・カード一覧・追加フォーム)を持ち、<span class="mono">data-list-id</span>属性でどのリストかを識別する。編集ボタンを押すとカードがその場で編集フォームに切り替わる。</p>
+
+        <h3>画面/状態遷移図</h3>
+        <p>現状は単一ページ内の状態切り替えのみだが、REQ-05・REQ-12の実装を見据え、将来の画面/状態も含めて整理する。</p>
+        <div class="table-scroll">
+          <table class="req-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>名称</th>
+                <th>説明</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="req-id">SCR-01</td>
+                <td>ボード画面(通常表示)</td>
+                <td>3リストのカード一覧を表示する、現在実装済みのメイン画面</td>
+              </tr>
+              <tr>
+                <td class="req-id">SCR-02</td>
+                <td>カード編集モード</td>
+                <td>編集ボタン押下でカードがその場で編集フォームに切り替わる(実装済み)</td>
+              </tr>
+              <tr>
+                <td class="req-id">SCR-03</td>
+                <td>リスト編集モード<span class="muted mono">(予定)</span></td>
+                <td>REQ-05実装後、リストの追加・名称変更・削除を行う</td>
+              </tr>
+              <tr>
+                <td class="req-id">SCR-04</td>
+                <td>ボード一覧/切り替え画面<span class="muted mono">(予定)</span></td>
+                <td>REQ-12実装後、複数ボードを作成・切り替える</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="structure-tree">[SCR-01 ボード画面] &#8212;編集ボタン&#8594; [SCR-02 カード編集モード]
+[SCR-02 カード編集モード] &#8212;保存/キャンセル&#8594; [SCR-01 ボード画面]
+[SCR-01 ボード画面] &#8212;<span class="c">(予定)</span>リスト編集ボタン&#8594; [SCR-03 リスト編集モード]
+[SCR-03 リスト編集モード] &#8212;保存/キャンセル&#8594; [SCR-01 ボード画面]
+[SCR-01 ボード画面] &#8212;<span class="c">(予定)</span>ボード切り替えメニュー&#8594; [SCR-04 ボード一覧画面]
+[SCR-04 ボード一覧画面] &#8212;ボード選択&#8594; [SCR-01 ボード画面]</div>
       </section>
 
       <section class="doc-section" id="datamodel">
-        <h2><span class="num">8.</span>データモデル</h2>
+        <h2><span class="num">9.</span>データモデル</h2>
         <p>状態は1つのオブジェクトで管理し、リストIDをキーにカードオブジェクトの配列を持つ。表示順は配列の順序ではなく、描画のたびに期限(<span class="mono">due</span>)の早い順で並び替えて決まる。</p>
         <pre class="code-block">{
   "todo": [
@@ -786,10 +1035,106 @@
   ]
 }</pre>
         <p class="muted">この状態は <span class="mono">localStorage["trello-clone-data"]</span> にJSON文字列として保存される。<span class="mono">completedAt</span>は「完了」リストに入った日付で、完了チェックまたはドラッグでの移動時に自動で設定される。</p>
+
+        <h3>拡張案(REQ-05 / REQ-11 / REQ-12 対応後)</h3>
+        <p>現状のモデルは「リストID(todo/doing/done)が固定」「カードが配列の位置でしか識別できない」という前提に依存しており、リストの追加・削除(REQ-05)や手動並び替え(REQ-11)、複数ボード(REQ-12)に対応できない。これらに対応するため、以下のようにモデルを拡張する案を示す。</p>
+        <pre class="code-block">{
+  "activeBoardId": "board-1",
+  "boards": [
+    {
+      "id": "board-1",
+      "name": "マイボード",
+      "lists": [
+        { "id": "todo", "name": "未着手", "order": 0 },
+        { "id": "doing", "name": "進行中", "order": 1 },
+        { "id": "done", "name": "完了", "order": 2 }
+      ],
+      "cards": [
+        {
+          "id": "card-a1b2c3",
+          "listId": "todo",
+          "order": 0,
+          "text": "要件定義書を読む",
+          "due": "2026-09-15",
+          "subtasks": [
+            { "text": "5章まで読む", "done": true }
+          ],
+          "completedAt": ""
+        }
+      ]
+    }
+  ]
+}</pre>
+        <p class="muted">主な変更点は次の3つ。</p>
+        <ul class="nfr-list" style="grid-template-columns: 1fr;">
+          <li style="grid-template-columns: 1fr;"><span class="mono">boards</span> 配列を追加し、ボードごとに <span class="mono">lists</span> と <span class="mono">cards</span> を持たせる(REQ-12)</li>
+          <li style="grid-template-columns: 1fr;">リストを固定キーではなく <span class="mono">lists</span> 配列(id・name・order)として持たせ、追加・改名・削除を可能にする(REQ-05)</li>
+          <li style="grid-template-columns: 1fr;">カードに一意な <span class="mono">id</span> と <span class="mono">order</span> を持たせ、配列の位置ではなくIDと並び順の値で識別・並び替えできるようにする(REQ-11)。現状のようにリストごとの配列に分けず、<span class="mono">listId</span> で所属リストを表す</li>
+        </ul>
+        <p class="muted">既存データ(v1形式)からの移行時は、<span class="mono">todo/doing/done</span> の3キーを <span class="mono">lists</span> 配列に変換し、各カードにUUID等で <span class="mono">id</span> を採番し、配列内の位置をそのまま <span class="mono">order</span> の初期値として引き継ぐ想定。</p>
+      </section>
+
+      <section class="doc-section" id="backend">
+        <h2><span class="num">10.</span>バックエンド・API設計</h2>
+        <p>REQ-14(サーバー保存による複数端末同期)の対応にあたり、9章のデータモデル拡張案をもとにDBスキーマとAPIを設計する。具体的な実装言語・フレームワークは未定のため、本章では技術非依存の設計(テーブル定義・RESTエンドポイント)にとどめる。認証(REQ-13)は今回のスコープ外とし、<strong>単一ユーザーが利用する前提</strong>でユーザーテーブルは持たない。</p>
+
+        <h3>DBスキーマ(案)</h3>
+        <pre class="code-block">boards
+  id            PK
+  name          TEXT
+
+lists
+  id            PK
+  board_id      FK -> boards.id
+  name          TEXT
+  order         INTEGER
+
+cards
+  id            PK
+  list_id       FK -> lists.id
+  text          TEXT
+  due           DATE (nullable)
+  completed_at  DATE (nullable)
+  order         INTEGER
+
+subtasks
+  id            PK
+  card_id       FK -> cards.id
+  text          TEXT
+  done          BOOLEAN</pre>
+        <p class="muted">9章のJSONモデルとほぼ1対1で対応する。<span class="mono">boards → lists → cards → subtasks</span> の順に親子関係を持ち、それぞれ外部キーで紐づく。</p>
+
+        <h3>APIエンドポイント(案)</h3>
+        <div class="table-scroll">
+          <table class="req-table">
+            <thead>
+              <tr>
+                <th>Method</th>
+                <th>Path</th>
+                <th>説明</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td class="mono">GET</td><td class="mono">/boards</td><td>ボード一覧を取得する</td></tr>
+              <tr><td class="mono">POST</td><td class="mono">/boards</td><td>ボードを新規作成する</td></tr>
+              <tr><td class="mono">GET</td><td class="mono">/boards/:boardId</td><td>指定ボードのリスト・カード・小項目を含めて取得する</td></tr>
+              <tr><td class="mono">POST</td><td class="mono">/boards/:boardId/lists</td><td>リストを追加する</td></tr>
+              <tr><td class="mono">PATCH</td><td class="mono">/lists/:listId</td><td>リスト名・並び順を変更する</td></tr>
+              <tr><td class="mono">DELETE</td><td class="mono">/lists/:listId</td><td>リストを削除する(配下のカードも削除)</td></tr>
+              <tr><td class="mono">POST</td><td class="mono">/lists/:listId/cards</td><td>カードを追加する</td></tr>
+              <tr><td class="mono">PATCH</td><td class="mono">/cards/:cardId</td><td>カードのテキスト・期限・所属リスト・並び順を更新する</td></tr>
+              <tr><td class="mono">DELETE</td><td class="mono">/cards/:cardId</td><td>カードを削除する</td></tr>
+              <tr><td class="mono">POST</td><td class="mono">/cards/:cardId/subtasks</td><td>小項目を追加する</td></tr>
+              <tr><td class="mono">PATCH</td><td class="mono">/subtasks/:subtaskId</td><td>小項目の完了状態・テキストを更新する</td></tr>
+              <tr><td class="mono">DELETE</td><td class="mono">/subtasks/:subtaskId</td><td>小項目を削除する</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="muted">カードの移動(リスト間移動・並び替え)は個別のエンドポイントを設けず、<span class="mono">PATCH /cards/:cardId</span> で <span class="mono">listId</span> と <span class="mono">order</span> を更新する形に統一する。</p>
       </section>
 
       <section class="doc-section" id="constraints">
-        <h2><span class="num">9.</span>制約・前提</h2>
+        <h2><span class="num">11.</span>制約・前提</h2>
         <ul class="nfr-list" style="grid-template-columns: 1fr;">
           <li style="grid-template-columns: 1fr;">バックエンド・データベースを持たないため、ブラウザのデータを消去するとタスクも失われる</li>
           <li style="grid-template-columns: 1fr;">認証機能がないため、同じ端末・ブラウザを使う人であれば誰でも閲覧・編集できる</li>
@@ -797,8 +1142,57 @@
         </ul>
       </section>
 
+      <section class="doc-section" id="risks">
+        <h2><span class="num">12.</span>リスクと対応策</h2>
+        <p>制約・前提から想定される主なリスクと、その対応策を整理する。</p>
+        <div class="table-scroll">
+          <table class="req-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>リスク</th>
+                <th>影響度</th>
+                <th>対応策</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="req-id">RISK-01</td>
+                <td>ブラウザのデータ削除やlocalStorageのクリアによるタスク全消失</td>
+                <td><span class="pill pill-wont">高</span></td>
+                <td>REQ-14(サーバー/DB保存)への移行で根本的に解消される。移行までの間は定期的なエクスポート機能(JSONダウンロード)を検討する</td>
+              </tr>
+              <tr>
+                <td class="req-id">RISK-02</td>
+                <td>REQ-02のカード削除に確認ダイアログがなく、誤クリックで即削除される</td>
+                <td><span class="pill pill-should">中</span></td>
+                <td>削除前に確認ダイアログを挟む改修を検討する(現状は許容している既知のリスク)</td>
+              </tr>
+              <tr>
+                <td class="req-id">RISK-03</td>
+                <td>認証機能がないため、同じ端末・ブラウザを使える人なら誰でも閲覧・編集できる</td>
+                <td><span class="pill pill-could">低</span></td>
+                <td>個人利用が前提のため現状は許容する。共有端末で使う場合は利用者自身が注意する</td>
+              </tr>
+              <tr>
+                <td class="req-id">RISK-04</td>
+                <td>localStorageの保存容量上限(ブラウザ実装依存、目安5〜10MB)を超えると保存に失敗する可能性がある</td>
+                <td><span class="pill pill-could">低</span></td>
+                <td>想定利用件数(数十〜数百件)では上限に達しない見込み。上限に近づいた場合のエラーハンドリングは未対応</td>
+              </tr>
+              <tr>
+                <td class="req-id">RISK-05</td>
+                <td>フロントエンドのみの構成のため、コード変更ミスがアプリ全体の停止に直結する</td>
+                <td><span class="pill pill-should">中</span></td>
+                <td>Gitでバージョン管理し、問題発生時は直前のコミットに戻せる状態を保つ</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
       <section class="doc-section" id="roadmap">
-        <h2><span class="num">10.</span>今後の拡張候補</h2>
+        <h2><span class="num">13.</span>今後の拡張候補</h2>
         <p>優先度が高いと考えられる順に、次の開発ステップの候補を挙げる。</p>
         <ol class="roadmap">
           <li>
@@ -825,8 +1219,15 @@
           <li>
             <span class="step-num">04</span>
             <div>
-              <p class="step-title">バックエンド化の検討</p>
-              <p class="step-desc">複数端末での同期や共有が必要になった場合、サーバー・DBを持つ構成へ移行する。</p>
+              <p class="step-title">バックエンド・DB化(REQ-14)</p>
+              <p class="step-desc">10章のAPI・DBスキーマ設計をもとに、サーバー・DBを持つ構成へ移行する。技術スタックは未確定のため、選定から着手する。</p>
+            </div>
+          </li>
+          <li>
+            <span class="step-num">05</span>
+            <div>
+              <p class="step-title">認証機能の追加(REQ-13)</p>
+              <p class="step-desc">バックエンド化後、複数人での利用や公開を見据える場合にユーザー登録・ログインを追加する。</p>
             </div>
           </li>
         </ol>
@@ -835,6 +1236,9 @@
     </main>
   </div>
 
-  <footer class="doc-footer">TB-REQ-001 &middot; v0.2 &middot; 2026-09-11</footer>
+  <footer class="doc-footer">TB-REQ-001 &middot; v0.5 &middot; 2026-09-15</footer>
 
 </div>
+
+</body>
+</html>
