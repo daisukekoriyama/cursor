@@ -513,7 +513,7 @@
       </div>
       <div>
         <dt>バージョン</dt>
-        <dd>v0.6</dd>
+        <dd>v0.7</dd>
       </div>
       <div>
         <dt>作成日</dt>
@@ -803,7 +803,7 @@
                 <td class="req-id">REQ-05</td>
                 <td>リストの追加・名称変更・削除ができる</td>
                 <td><span class="pill pill-should">Should</span></td>
-                <td><span class="status status-planned">未実装</span></td>
+                <td><span class="status status-done">実装済み</span></td>
                 <td>「リスト追加」操作で新しい空リストが末尾に作成できる。既存リストの名称を変更でき、削除するとリスト内のカードごと一覧から消える(削除時は確認を挟む)</td>
               </tr>
               <tr>
@@ -1200,7 +1200,7 @@ subtasks
           <li>
             <span class="step-num">01</span>
             <div>
-              <p class="step-title">リストの編集機能(REQ-05)</p>
+              <p class="step-title">リストの編集機能(REQ-05)<span class="muted mono">(実装済み)</span></p>
               <p class="step-desc">リストの追加・名称変更・削除に対応し、固定3列の制約をなくす。</p>
             </div>
           </li>
@@ -1325,6 +1325,11 @@ subtasks
                 <td class="mono">2026-09-15</td>
                 <td>KPI・成功指標(学習プロセス重視)、改訂履歴セクションを追加</td>
               </tr>
+              <tr>
+                <td class="mono">v0.7</td>
+                <td class="mono">2026-09-15</td>
+                <td>REQ-05(リストの追加・名称変更・削除)をフロントエンド(HTML/CSS/バニラJS)に実装。データモデルを<span class="mono">{lists, cards}</span>形式に変更し、固定3リストの制約を解消</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -1333,7 +1338,7 @@ subtasks
     </main>
   </div>
 
-  <footer class="doc-footer">TB-REQ-001 &middot; v0.6 &middot; 2026-09-15</footer>
+  <footer class="doc-footer">TB-REQ-001 &middot; v0.7 &middot; 2026-09-15</footer>
 
 </div>
 

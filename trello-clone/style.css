@@ -35,9 +35,87 @@ header h1 {
   padding: 8px;
 }
 
-.list h2 {
+.list-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 4px;
+  margin: 4px 4px 12px;
+}
+
+.list-header h2 {
   font-size: 14px;
-  margin: 4px 8px 12px;
+  margin: 0;
+  word-break: break-word;
+}
+
+.list-actions {
+  display: flex;
+  gap: 2px;
+  flex: 0 0 auto;
+}
+
+.list-actions button {
+  border: none;
+  background: transparent;
+  color: #6b778c;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  padding: 2px 4px;
+}
+
+.list-rename-btn:hover {
+  color: #0d5b8c;
+}
+
+.list-delete-btn:hover {
+  color: #c0392b;
+}
+
+.list-rename-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 4px 4px 12px;
+}
+
+.list-rename-form input {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #dfe1e6;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.add-list-form {
+  width: 260px;
+  flex: 0 0 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+}
+
+.add-list-form input {
+  padding: 8px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.add-list-form button {
+  border: none;
+  border-radius: 4px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.3);
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.add-list-form button:hover {
+  background: rgba(255, 255, 255, 0.45);
 }
 
 .cards {

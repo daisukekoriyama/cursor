@@ -1,6 +1,10 @@
 const STORAGE_KEY = "trello-clone-data";
 
-const listIds = ["todo", "doing", "done"];
+const DEFAULT_LISTS = [
+  { id: "todo", name: "未着手" },
+  { id: "doing", name: "進行中" },
+  { id: "done", name: "完了" },
+];
 
 function normalizeSubtask(subtask) {
   if (typeof subtask === "string") {
@@ -24,14 +28,30 @@ function normalizeCard(card) {
 function loadData() {
   const raw = localStorage.getItem(STORAGE_KEY);
   if (!raw) {
-    return { todo: [], doing: [], done: [] };
+    const cards = {};
+    DEFAULT_LISTS.forEach((list) => {
+      cards[list.id] = [];
+    });
+    return { lists: DEFAULT_LISTS.map((list) => ({ ...list })), cards };
   }
+
   const parsed = JSON.parse(raw);
-  const normalized = {};
-  listIds.forEach((listId) => {
-    normalized[listId] = (parsed[listId] || []).map(normalizeCard);
+
+  if (!parsed.lists) {
+    // 旧形式 { todo: [...], doing: [...], done: [...] } からの移行
+    const cards = {};
+    DEFAULT_LISTS.forEach((list) => {
+      cards[list.id] = (parsed[list.id] || []).map(normalizeCard);
+    });
+    return { lists: DEFAULT_LISTS.map((list) => ({ ...list })), cards };
+  }
+
+  const lists = parsed.lists.map((list) => ({ id: list.id, name: list.name || "" }));
+  const cards = {};
+  lists.forEach((list) => {
+    cards[list.id] = ((parsed.cards && parsed.cards[list.id]) || []).map(normalizeCard);
   });
-  return normalized;
+  return { lists, cards };
 }
 
 function saveData(data) {
@@ -40,6 +60,7 @@ function saveData(data) {
 
 let data = loadData();
 let editingCard = null;
+let editingList = null;
 
 function formatDue(due) {
   const [year, month, day] = due.split("-");
@@ -57,15 +78,15 @@ function todayISO() {
 }
 
 function completeCard(listId, index) {
-  const [card] = data[listId].splice(index, 1);
+  const [card] = data.cards[listId].splice(index, 1);
   card.completedAt = todayISO();
-  data.done.push(card);
+  data.cards.done.push(card);
   saveData(data);
   render();
 }
 
 function sortByDue(listId) {
-  data[listId].sort((a, b) => {
+  data.cards[listId].sort((a, b) => {
     if (!a.due && !b.due) return 0;
     if (!a.due) return 1;
     if (!b.due) return -1;
@@ -74,14 +95,224 @@ function sortByDue(listId) {
 }
 
 function render() {
-  listIds.forEach((listId) => {
-    sortByDue(listId);
-    const container = document.querySelector(`.cards[data-list-id="${listId}"]`);
-    container.innerHTML = "";
-    data[listId].forEach((card, index) => {
-      container.appendChild(createCardElement(listId, index, card));
-    });
+  const board = document.getElementById("board");
+  board.innerHTML = "";
+  data.lists.forEach((list) => {
+    sortByDue(list.id);
+    board.appendChild(createListElement(list));
   });
+  board.appendChild(createAddListElement());
+}
+
+function createListElement(list) {
+  const listId = list.id;
+  const listEl = document.createElement("section");
+  listEl.className = "list";
+  listEl.dataset.listId = listId;
+
+  if (editingList === listId) {
+    listEl.appendChild(createListRenameForm(list));
+  } else {
+    listEl.appendChild(createListHeader(list));
+  }
+
+  const container = document.createElement("div");
+  container.className = "cards";
+  container.dataset.listId = listId;
+
+  data.cards[listId].forEach((card, index) => {
+    container.appendChild(createCardElement(listId, index, card));
+  });
+
+  container.addEventListener("dragover", (event) => {
+    event.preventDefault();
+    container.classList.add("drag-over");
+  });
+
+  container.addEventListener("dragleave", () => {
+    container.classList.remove("drag-over");
+  });
+
+  container.addEventListener("drop", (event) => {
+    event.preventDefault();
+    container.classList.remove("drag-over");
+
+    const dragging = document.querySelector(".card.dragging");
+    if (!dragging) return;
+
+    const fromListId = dragging.dataset.listId;
+    const fromIndex = Number(dragging.dataset.index);
+    const toListId = listId;
+    if (!data.cards[fromListId]) return;
+
+    const [movedCard] = data.cards[fromListId].splice(fromIndex, 1);
+    movedCard.completedAt = toListId === "done" ? todayISO() : "";
+    data.cards[toListId].push(movedCard);
+
+    saveData(data);
+    render();
+  });
+
+  listEl.appendChild(container);
+  listEl.appendChild(createAddCardForm(listId));
+
+  return listEl;
+}
+
+function createListHeader(list) {
+  const header = document.createElement("div");
+  header.className = "list-header";
+
+  const title = document.createElement("h2");
+  title.textContent = list.name;
+  header.appendChild(title);
+
+  const actions = document.createElement("div");
+  actions.className = "list-actions";
+
+  const renameBtn = document.createElement("button");
+  renameBtn.type = "button";
+  renameBtn.className = "list-rename-btn";
+  renameBtn.textContent = "✎";
+  renameBtn.title = "リスト名を変更";
+  renameBtn.addEventListener("click", () => {
+    editingList = list.id;
+    render();
+  });
+  actions.appendChild(renameBtn);
+
+  if (list.id !== "done") {
+    const deleteBtn = document.createElement("button");
+    deleteBtn.type = "button";
+    deleteBtn.className = "list-delete-btn";
+    deleteBtn.textContent = "×";
+    deleteBtn.title = "リストを削除";
+    deleteBtn.addEventListener("click", () => {
+      const cardCount = data.cards[list.id].length;
+      const message = cardCount
+        ? `「${list.name}」を削除しますか?リスト内の${cardCount}件のカードも削除されます。`
+        : `「${list.name}」を削除しますか?`;
+      if (!confirm(message)) return;
+
+      data.lists = data.lists.filter((l) => l.id !== list.id);
+      delete data.cards[list.id];
+      if (editingCard && editingCard.listId === list.id) editingCard = null;
+      if (editingList === list.id) editingList = null;
+
+      saveData(data);
+      render();
+    });
+    actions.appendChild(deleteBtn);
+  }
+
+  header.appendChild(actions);
+  return header;
+}
+
+function createListRenameForm(list) {
+  const form = document.createElement("form");
+  form.className = "list-rename-form";
+
+  const nameInput = document.createElement("input");
+  nameInput.type = "text";
+  nameInput.value = list.name;
+  nameInput.required = true;
+  form.appendChild(nameInput);
+
+  const buttonRow = document.createElement("div");
+  buttonRow.className = "edit-actions";
+
+  const saveBtn = document.createElement("button");
+  saveBtn.type = "submit";
+  saveBtn.textContent = "保存";
+  buttonRow.appendChild(saveBtn);
+
+  const cancelBtn = document.createElement("button");
+  cancelBtn.type = "button";
+  cancelBtn.textContent = "キャンセル";
+  cancelBtn.addEventListener("click", () => {
+    editingList = null;
+    render();
+  });
+  buttonRow.appendChild(cancelBtn);
+
+  form.appendChild(buttonRow);
+
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const name = nameInput.value.trim();
+    if (!name) return;
+    const target = data.lists.find((l) => l.id === list.id);
+    target.name = name;
+    editingList = null;
+    saveData(data);
+    render();
+  });
+
+  return form;
+}
+
+function createAddCardForm(listId) {
+  const form = document.createElement("form");
+  form.className = "add-card-form";
+
+  const textInput = document.createElement("input");
+  textInput.type = "text";
+  textInput.name = "text";
+  textInput.placeholder = "タスクを入力してEnter";
+  textInput.required = true;
+  form.appendChild(textInput);
+
+  const dueInput = document.createElement("input");
+  dueInput.type = "date";
+  dueInput.name = "due";
+  dueInput.className = "due-input";
+  form.appendChild(dueInput);
+
+  const submitBtn = document.createElement("button");
+  submitBtn.type = "submit";
+  submitBtn.textContent = "追加";
+  form.appendChild(submitBtn);
+
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const text = textInput.value.trim();
+    if (!text) return;
+    data.cards[listId].push({ text, due: dueInput.value, subtasks: [], completedAt: "" });
+    saveData(data);
+    render();
+  });
+
+  return form;
+}
+
+function createAddListElement() {
+  const form = document.createElement("form");
+  form.className = "add-list-form";
+
+  const nameInput = document.createElement("input");
+  nameInput.type = "text";
+  nameInput.placeholder = "リストを追加";
+  nameInput.required = true;
+  form.appendChild(nameInput);
+
+  const submitBtn = document.createElement("button");
+  submitBtn.type = "submit";
+  submitBtn.textContent = "リストを追加";
+  form.appendChild(submitBtn);
+
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const name = nameInput.value.trim();
+    if (!name) return;
+    const id = crypto.randomUUID();
+    data.lists.push({ id, name });
+    data.cards[id] = [];
+    saveData(data);
+    render();
+  });
+
+  return form;
 }
 
 function createCardElement(listId, index, card) {
@@ -163,7 +394,7 @@ function createCardElement(listId, index, card) {
   deleteBtn.textContent = "×";
   deleteBtn.type = "button";
   deleteBtn.addEventListener("click", () => {
-    data[listId].splice(index, 1);
+    data.cards[listId].splice(index, 1);
     saveData(data);
     render();
   });
@@ -203,7 +434,7 @@ function createSubtasksElement(listId, index, card) {
       checkbox.type = "checkbox";
       checkbox.checked = subtask.done;
       checkbox.addEventListener("change", () => {
-        data[listId][index].subtasks[subIndex].done = checkbox.checked;
+        data.cards[listId][index].subtasks[subIndex].done = checkbox.checked;
         saveData(data);
         render();
       });
@@ -220,7 +451,7 @@ function createSubtasksElement(listId, index, card) {
       removeBtn.className = "subtask-delete-btn";
       removeBtn.textContent = "×";
       removeBtn.addEventListener("click", () => {
-        data[listId][index].subtasks.splice(subIndex, 1);
+        data.cards[listId][index].subtasks.splice(subIndex, 1);
         saveData(data);
         render();
       });
@@ -244,7 +475,7 @@ function createSubtasksElement(listId, index, card) {
     event.preventDefault();
     const text = subtaskInput.value.trim();
     if (!text) return;
-    data[listId][index].subtasks.push({ text, done: false });
+    data.cards[listId][index].subtasks.push({ text, done: false });
     saveData(data);
     render();
   });
@@ -294,7 +525,7 @@ function createCardEditForm(listId, index, card) {
     event.preventDefault();
     const text = textInput.value.trim();
     if (!text) return;
-    data[listId][index] = {
+    data.cards[listId][index] = {
       text,
       due: dueInput.value,
       subtasks: card.subtasks,
@@ -307,55 +538,5 @@ function createCardEditForm(listId, index, card) {
 
   return form;
 }
-
-document.querySelectorAll(".add-card-form").forEach((form) => {
-  form.addEventListener("submit", (event) => {
-    event.preventDefault();
-    const textInput = form.querySelector('input[name="text"]');
-    const dueInput = form.querySelector('input[name="due"]');
-    const text = textInput.value.trim();
-    if (!text) return;
-    const listId = form.dataset.listId;
-    data[listId].push({ text, due: dueInput.value, subtasks: [], completedAt: "" });
-    saveData(data);
-    textInput.value = "";
-    dueInput.value = "";
-    render();
-  });
-});
-
-document.querySelectorAll(".cards").forEach((container) => {
-  container.addEventListener("dragover", (event) => {
-    event.preventDefault();
-    container.classList.add("drag-over");
-  });
-
-  container.addEventListener("dragleave", () => {
-    container.classList.remove("drag-over");
-  });
-
-  container.addEventListener("drop", (event) => {
-    event.preventDefault();
-    container.classList.remove("drag-over");
-
-    const dragging = document.querySelector(".card.dragging");
-    if (!dragging) return;
-
-    const fromListId = dragging.dataset.listId;
-    const fromIndex = Number(dragging.dataset.index);
-    const toListId = container.dataset.listId;
-
-    const [movedCard] = data[fromListId].splice(fromIndex, 1);
-    if (toListId === "done") {
-      movedCard.completedAt = todayISO();
-    } else {
-      movedCard.completedAt = "";
-    }
-    data[toListId].push(movedCard);
-
-    saveData(data);
-    render();
-  });
-});
 
 render();
