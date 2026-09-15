@@ -1,0 +1,15 @@
+{
+  "name": "trello-clone-backend",
+  "version": "1.0.0",
+  "description": "Backend API for the trello-clone task board (see requirements.html section 10)",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.3.0",
+    "cors": "^2.8.5",
+    "express": "^4.21.0"
+  }
+}
