@@ -1,4 +1,5 @@
 const STORAGE_KEY = "trello-clone-data";
+const UPDATED_AT_KEY = "trello-clone-updated-at";
 
 const DEFAULT_LISTS = [
   { id: "todo", name: "未着手" },
@@ -56,6 +57,7 @@ function loadData() {
 
 function saveData(data) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  localStorage.setItem(UPDATED_AT_KEY, new Date().toISOString());
 }
 
 let data = loadData();
@@ -67,14 +69,20 @@ function formatDue(due) {
   return `${month}/${day}`;
 }
 
-function isOverdue(due) {
-  if (!due) return false;
-  const today = new Date().toISOString().slice(0, 10);
-  return due < today;
+function localDateISO(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
 function todayISO() {
-  return new Date().toISOString().slice(0, 10);
+  return localDateISO(new Date());
+}
+
+function isOverdue(due) {
+  if (!due) return false;
+  return due < todayISO();
 }
 
 function completeCard(listId, index) {
@@ -102,6 +110,112 @@ function render() {
     board.appendChild(createListElement(list));
   });
   board.appendChild(createAddListElement());
+  renderTodayDate();
+  renderCalendar();
+  renderLastUpdated();
+}
+
+function renderTodayDate() {
+  const label = new Date().toLocaleDateString("ja-JP", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    weekday: "short",
+  });
+  document.getElementById("today-date").textContent = `今日: ${label}`;
+}
+
+function renderLastUpdated() {
+  const el = document.getElementById("last-updated");
+  const raw = localStorage.getItem(UPDATED_AT_KEY);
+  if (!raw) {
+    el.textContent = "最終更新: まだ更新されていません";
+    return;
+  }
+  const label = new Date(raw).toLocaleString("ja-JP", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  el.textContent = `最終更新: ${label}`;
+}
+
+function collectDueMap() {
+  const map = {};
+  data.lists.forEach((list) => {
+    if (list.id === "done") return;
+    data.cards[list.id].forEach((card) => {
+      if (!card.due) return;
+      if (!map[card.due]) map[card.due] = [];
+      map[card.due].push(card.text);
+    });
+  });
+  return map;
+}
+
+function renderCalendar() {
+  const container = document.getElementById("calendar");
+  container.innerHTML = "";
+
+  const dueMap = collectDueMap();
+  const today = new Date();
+  const todayKey = todayISO();
+
+  const months = document.createElement("div");
+  months.className = "calendar-months";
+
+  for (let offset = 0; offset < 3; offset++) {
+    const first = new Date(today.getFullYear(), today.getMonth() + offset, 1);
+    months.appendChild(createMonthElement(first, dueMap, todayKey));
+  }
+
+  container.appendChild(months);
+}
+
+function createMonthElement(first, dueMap, todayKey) {
+  const monthEl = document.createElement("div");
+  monthEl.className = "calendar-month";
+
+  const title = document.createElement("div");
+  title.className = "calendar-title";
+  title.textContent = `${first.getFullYear()}年${first.getMonth() + 1}月`;
+  monthEl.appendChild(title);
+
+  const grid = document.createElement("div");
+  grid.className = "calendar-grid";
+
+  ["日", "月", "火", "水", "木", "金", "土"].forEach((name) => {
+    const head = document.createElement("div");
+    head.className = "calendar-weekday";
+    head.textContent = name;
+    grid.appendChild(head);
+  });
+
+  for (let i = 0; i < first.getDay(); i++) {
+    const blank = document.createElement("div");
+    grid.appendChild(blank);
+  }
+
+  const daysInMonth = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate();
+  for (let day = 1; day <= daysInMonth; day++) {
+    const date = new Date(first.getFullYear(), first.getMonth(), day);
+    const key = localDateISO(date);
+
+    const cell = document.createElement("div");
+    cell.className = "calendar-day";
+    cell.textContent = day;
+    if (key === todayKey) cell.classList.add("today");
+    if (dueMap[key]) {
+      cell.classList.add("has-due");
+      cell.title = `期限: ${dueMap[key].join("、")}`;
+    }
+    grid.appendChild(cell);
+  }
+
+  monthEl.appendChild(grid);
+  return monthEl;
 }
 
 function createListElement(list) {

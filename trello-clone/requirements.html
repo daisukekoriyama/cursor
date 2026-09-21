@@ -513,7 +513,7 @@
       </div>
       <div>
         <dt>バージョン</dt>
-        <dd>v0.7</dd>
+        <dd>v0.8</dd>
       </div>
       <div>
         <dt>作成日</dt>
@@ -521,7 +521,7 @@
       </div>
       <div>
         <dt>更新日</dt>
-        <dd>2026-09-15</dd>
+        <dd>2026-09-21</dd>
       </div>
       <div>
         <dt>作成者</dt>
@@ -575,6 +575,7 @@
               <li>カード内のチェックリスト(小項目)</li>
               <li>チェックで完了リストへ自動移動、終了日の記録</li>
               <li>ブラウザ内へのデータ保存(localStorage)</li>
+              <li>今日の日付・3ヶ月カレンダー・最終更新日時の表示</li>
               <li>サーバー(DB)へのデータ保存(認証なし・単一ユーザー想定)</li>
             </ul>
           </div>
@@ -674,6 +675,16 @@
                 <td class="req-id">UC-09</td>
                 <td>利用者として、完了リストではいつ終わらせたかを確認したい。なぜなら自分の作業ペースを振り返りたいから</td>
                 <td class="req-id">REQ-10</td>
+              </tr>
+              <tr>
+                <td class="req-id">UC-10</td>
+                <td>利用者として、今日の日付と直近の予定をボードと同じ画面で確認したい。なぜなら期限までの残り日数を、別のカレンダーアプリを開かずに把握したいから</td>
+                <td class="req-id">REQ-15, REQ-16</td>
+              </tr>
+              <tr>
+                <td class="req-id">UC-11</td>
+                <td>利用者として、ボードを最後に更新した日時を確認したい。なぜなら、しばらく開いていなかったときに情報がどのくらい古いかを判断したいから</td>
+                <td class="req-id">REQ-17</td>
               </tr>
             </tbody>
           </table>
@@ -869,6 +880,27 @@
                 <td><span class="status status-planned">未実装</span></td>
                 <td>ある端末でカードを追加・編集・削除・移動したあと、別端末で同じURLを開くと、その変更結果が反映されている</td>
               </tr>
+              <tr>
+                <td class="req-id">REQ-15</td>
+                <td>画面左上に、ページを開いた日(今日)の日付と曜日を表示する</td>
+                <td><span class="pill pill-should">Should</span></td>
+                <td><span class="status status-done">実装済み</span></td>
+                <td>ページを開くと、ヘッダー左上に「今日: 2026年9月21日(月)」の形式で端末のローカル日付が表示される。日付をまたいだあとに再読み込みすると新しい日付になる</td>
+              </tr>
+              <tr>
+                <td class="req-id">REQ-16</td>
+                <td>画面下部に今月・来月・再来月の3ヶ月分のカレンダーを中央寄せで表示し、今日の日付と、カードの期限がある日を示す</td>
+                <td><span class="pill pill-should">Should</span></td>
+                <td><span class="status status-done">実装済み</span></td>
+                <td>3ヶ月分の月表示が並び、今日が強調される。期限が設定された未完了カードの日付に印が付き、その日付にカーソルを合わせるとカード名が表示される。「完了」リストのカードは印の対象外。カードの期限を変更・削除するとカレンダーにも反映される</td>
+              </tr>
+              <tr>
+                <td class="req-id">REQ-17</td>
+                <td>画面下段に、ボードのデータを最後に変更した日時(最終更新)を表示する</td>
+                <td><span class="pill pill-should">Should</span></td>
+                <td><span class="status status-done">実装済み</span></td>
+                <td>カード・リストの追加・編集・削除・移動のいずれかを行うと、下段の「最終更新」が操作した日時に更新され、再読み込みしても保持される。一度も更新していない場合は「まだ更新されていません」と表示される</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -949,13 +981,14 @@
 
       <section class="doc-section" id="screens">
         <h2><span class="num">8.</span>画面構成</h2>
-        <p>画面は単一ページで構成し、ヘッダーと3列のボードのみを持つシンプルな構造とする。</p>
+        <p>画面は単一ページで構成する。上から順に、ヘッダー(今日の日付・タイトル)、リストが並ぶボード、3ヶ月カレンダー、フッター(最終更新)を持つ。ボードとカレンダーは1画面に収まり、カードが多い場合はボード領域の中でスクロールする。</p>
         <div class="structure-tree"><span class="c">header</span>
+&nbsp;&nbsp;today-date <span class="c">(今日の日付・左上)</span>
 &nbsp;&nbsp;h1 &quot;タスクボード&quot;
 
 <span class="c">main.board</span>
-&nbsp;&nbsp;section.list [未着手 / 進行中 / 完了]
-&nbsp;&nbsp;&nbsp;&nbsp;h2
+&nbsp;&nbsp;section.list &times; N <span class="c">(初期は 未着手 / 進行中 / 完了)</span>
+&nbsp;&nbsp;&nbsp;&nbsp;list-header <span class="c">(リスト名・改名ボタン・削除ボタン ※完了リストは削除不可)</span>
 &nbsp;&nbsp;&nbsp;&nbsp;div.cards
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;div.card &times; N
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;due-badge <span class="c">(期限 or 終了日)</span>
@@ -963,7 +996,14 @@
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;subtasks <span class="c">(進捗・チェックリスト・小項目追加フォーム)</span>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;edit-btn(&#9998;) / delete-btn(&times;)
 &nbsp;&nbsp;&nbsp;&nbsp;form.add-card-form
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;text入力 &#8594; due入力 &#8594; 追加ボタン</div>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;text入力 &#8594; due入力 &#8594; 追加ボタン
+&nbsp;&nbsp;form.add-list-form <span class="c">(ボード末尾)</span>
+
+<span class="c">section.calendar</span> <span class="c">(下部・中央寄せ)</span>
+&nbsp;&nbsp;calendar-month &times; 3 <span class="c">(今月・来月・再来月。今日を強調、期限のある日に印)</span>
+
+<span class="c">footer</span>
+&nbsp;&nbsp;last-updated <span class="c">(最終更新日時)</span></div>
         <p class="muted">各リストは同一構造(見出し・カード一覧・追加フォーム)を持ち、<span class="mono">data-list-id</span>属性でどのリストかを識別する。編集ボタンを押すとカードがその場で編集フォームに切り替わる。</p>
 
         <h3>画面/状態遷移図</h3>
@@ -1037,6 +1077,7 @@
   ]
 }</pre>
         <p class="muted">この状態は <span class="mono">localStorage["trello-clone-data"]</span> にJSON文字列として保存される。<span class="mono">completedAt</span>は「完了」リストに入った日付で、完了チェックまたはドラッグでの移動時に自動で設定される。</p>
+        <p class="muted">上記はv0.1時点の形式。v0.7(REQ-05実装)以降の実装では、リストIDのキーを直接持つ代わりに <span class="mono">{ lists: [{ id, name }], cards: { [listId]: [...] } }</span> の形で保存し、旧形式のデータは読み込み時に自動で変換する(カードの構造は変わらず、カードIDや並び順の値はREQ-11以降で導入予定)。また、最終更新日時(REQ-17)は本体とは別に <span class="mono">localStorage["trello-clone-updated-at"]</span> へISO形式の日時で保存し、データ構造は変更しない。</p>
 
         <h3>拡張案(REQ-05 / REQ-11 / REQ-12 対応後)</h3>
         <p>現状のモデルは「リストID(todo/doing/done)が固定」「カードが配列の位置でしか識別できない」という前提に依存しており、リストの追加・削除(REQ-05)や手動並び替え(REQ-11)、複数ボード(REQ-12)に対応できない。これらに対応するため、以下のようにモデルを拡張する案を示す。</p>
@@ -1330,6 +1371,11 @@ subtasks
                 <td class="mono">2026-09-15</td>
                 <td>REQ-05(リストの追加・名称変更・削除)をフロントエンド(HTML/CSS/バニラJS)に実装。データモデルを<span class="mono">{lists, cards}</span>形式に変更し、固定3リストの制約を解消</td>
               </tr>
+              <tr>
+                <td class="mono">v0.8</td>
+                <td class="mono">2026-09-21</td>
+                <td>画面表示の機能を追加(REQ-15 今日の日付、REQ-16 3ヶ月カレンダー、REQ-17 最終更新日時)。ユースケースUC-10・UC-11、画面構成、データモデルの記述を実装に合わせて更新。あわせて「今日」の判定をUTCから端末のローカル日付に修正</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -1338,7 +1384,7 @@ subtasks
     </main>
   </div>
 
-  <footer class="doc-footer">TB-REQ-001 &middot; v0.7 &middot; 2026-09-15</footer>
+  <footer class="doc-footer">TB-REQ-001 &middot; v0.8 &middot; 2026-09-21</footer>
 
 </div>
 
