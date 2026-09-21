@@ -513,7 +513,7 @@
       </div>
       <div>
         <dt>バージョン</dt>
-        <dd>v0.8</dd>
+        <dd>v0.9</dd>
       </div>
       <div>
         <dt>作成日</dt>
@@ -546,11 +546,12 @@
       <a href="#screens"><span class="toc-num">8</span>画面構成</a>
       <a href="#datamodel"><span class="toc-num">9</span>データモデル</a>
       <a href="#backend"><span class="toc-num">10</span>バックエンド・API設計</a>
-      <a href="#constraints"><span class="toc-num">11</span>制約・前提</a>
-      <a href="#risks"><span class="toc-num">12</span>リスクと対応策</a>
-      <a href="#roadmap"><span class="toc-num">13</span>今後の拡張</a>
-      <a href="#kpi"><span class="toc-num">14</span>KPI・成功指標</a>
-      <a href="#changelog"><span class="toc-num">15</span>改訂履歴</a>
+      <a href="#techstack"><span class="toc-num">11</span>技術スタック</a>
+      <a href="#constraints"><span class="toc-num">12</span>制約・前提</a>
+      <a href="#risks"><span class="toc-num">13</span>リスクと対応策</a>
+      <a href="#roadmap"><span class="toc-num">14</span>今後の拡張</a>
+      <a href="#kpi"><span class="toc-num">15</span>KPI・成功指標</a>
+      <a href="#changelog"><span class="toc-num">16</span>改訂履歴</a>
     </nav>
 
     <main class="content">
@@ -584,6 +585,7 @@
             <ul>
               <li>ユーザー登録・ログイン</li>
               <li>複数ユーザーでの共有・権限管理</li>
+              <li>Next.js(SSR/SSG)などのフルスタックフレームワークの採用</li>
               <li>複数ボードの作成</li>
               <li>リストの追加・編集</li>
               <li>同一リスト内でのカードの手動並び替え</li>
@@ -620,7 +622,7 @@
 
       <section class="doc-section" id="usecases">
         <h2><span class="num">4.</span>ユースケース</h2>
-        <p>機能要件(5章)を導出する元となる、利用者の行動をユーザーストーリー形式で整理する。「〜として、〜したい、なぜなら〜だから」の形で、各機能要件(REQ)がどの行動から生まれたかを対応づける。</p>
+        <p>機能要件(6章)を導出する元となる、利用者の行動をユーザーストーリー形式で整理する。「〜として、〜したい、なぜなら〜だから」の形で、各機能要件(REQ)がどの行動から生まれたかを対応づける。</p>
         <div class="table-scroll">
           <table class="req-table">
             <thead>
@@ -914,11 +916,11 @@
         <ul class="nfr-list">
           <li>
             <span class="label">動作環境</span>
-            <span>サーバー不要。index.htmlをブラウザで開くだけで動作すること</span>
+            <span>現行プロトタイプ(v0.x)は、サーバー不要でindex.htmlをブラウザで開くだけで動作すること。React・Spring Boot構成への移行後(REQ-14)は、PostgreSQLとSpring Boot(APIサーバー)、Vite(フロントエンドの開発サーバー)を起動すれば動作すること</span>
           </li>
           <li>
             <span class="label">データ永続性の範囲</span>
-            <span>同一ブラウザ・同一端末内でのみ保持される(localStorageの制約による)。サーバー障害による停止は起こり得ない構成とする</span>
+            <span>現行は同一ブラウザ・同一端末内でのみ保持される(localStorageの制約による)。サーバー障害による停止は起こり得ない。REQ-14の実装後はPostgreSQLに保存され、サーバーとDBが稼働していることが利用の前提になる</span>
           </li>
         </ul>
 
@@ -938,11 +940,11 @@
         <ul class="nfr-list">
           <li>
             <span class="label">環境構築</span>
-            <span>npmなどのビルドツールに依存せず、HTML・CSS・JSのみで完結すること。導入コストをゼロに保つ</span>
+            <span>現行プロトタイプはビルドツールに依存せず、HTML・CSS・JSのみで完結する。React・Spring Boot構成への移行後は、Node.js・JDK・Docker等が必要になるため、READMEにセットアップ手順を記載し、少数のコマンドで起動できること</span>
           </li>
           <li>
             <span class="label">コードの可読性</span>
-            <span>1機能=1関数を基本とし、コメントなしでも処理内容が追える命名・構造にすること</span>
+            <span>1機能=1関数(Reactでは1つの責務=1コンポーネントまたはカスタムフック)を基本とし、コメントなしでも処理内容が追える命名・構造にすること</span>
           </li>
         </ul>
 
@@ -962,11 +964,11 @@
         <ul class="nfr-list">
           <li>
             <span class="label">入力値の扱い</span>
-            <span>カードのテキストはDOM APIで挿入し、HTMLとして解釈させない(XSS対策)。<span class="mono">innerHTML</span>へのユーザー入力の直接挿入は行わない</span>
+            <span>カードのテキストはDOM APIで挿入し、HTMLとして解釈させない(XSS対策)。<span class="mono">innerHTML</span>へのユーザー入力の直接挿入は行わない。React移行後はReact標準のエスケープに任せ、<span class="mono">dangerouslySetInnerHTML</span>は使用しない。バックエンドではBean Validationで入力を検証し、DBアクセスはJPAのパラメータバインドで行う(SQLインジェクション対策)</span>
           </li>
           <li>
             <span class="label">アクセス制御</span>
-            <span>認証機能を持たないため、同じ端末・ブラウザを利用できる人は誰でも閲覧・編集できる(REQ-13は対象外のため、これはリスクとして許容する)</span>
+            <span>認証機能を持たないため、同じ端末・ブラウザを利用できる人は誰でも閲覧・編集できる(REQ-13は対象外のため、これはリスクとして許容する)。REQ-14の実装後はAPIも認証なしとなるため、インターネットへは公開せず、手元の環境でのみ運用する</span>
           </li>
         </ul>
 
@@ -1119,33 +1121,33 @@
 
       <section class="doc-section" id="backend">
         <h2><span class="num">10.</span>バックエンド・API設計</h2>
-        <p>REQ-14(サーバー保存による複数端末同期)の対応にあたり、9章のデータモデル拡張案をもとにDBスキーマとAPIを設計する。具体的な実装言語・フレームワークは未定のため、本章では技術非依存の設計(テーブル定義・RESTエンドポイント)にとどめる。認証(REQ-13)は今回のスコープ外とし、<strong>単一ユーザーが利用する前提</strong>でユーザーテーブルは持たない。</p>
+        <p>REQ-14(サーバー保存による複数端末同期)の対応にあたり、9章のデータモデル拡張案をもとにDBスキーマとAPIを設計する。バックエンドはJava + Spring Boot、DBはPostgreSQLで実装する(採用技術の詳細は11章)。認証(REQ-13)は今回のスコープ外とし、<strong>単一ユーザーが利用する前提</strong>でユーザーテーブルは持たない。</p>
 
         <h3>DBスキーマ(案)</h3>
         <pre class="code-block">boards
-  id            PK
-  name          TEXT
+  id            UUID          PK
+  name          VARCHAR(255)  NOT NULL
 
 lists
-  id            PK
-  board_id      FK -> boards.id
-  name          TEXT
-  order         INTEGER
+  id            UUID          PK
+  board_id      UUID          NOT NULL  FK -> boards.id  ON DELETE CASCADE
+  name          VARCHAR(255)  NOT NULL
+  sort_order    INTEGER       NOT NULL
 
 cards
-  id            PK
-  list_id       FK -> lists.id
-  text          TEXT
-  due           DATE (nullable)
-  completed_at  DATE (nullable)
-  order         INTEGER
+  id            UUID          PK
+  list_id       UUID          NOT NULL  FK -> lists.id   ON DELETE CASCADE
+  text          TEXT          NOT NULL
+  due           DATE          NULL
+  completed_at  DATE          NULL
+  sort_order    INTEGER       NOT NULL
 
 subtasks
-  id            PK
-  card_id       FK -> cards.id
-  text          TEXT
-  done          BOOLEAN</pre>
-        <p class="muted">9章のJSONモデルとほぼ1対1で対応する。<span class="mono">boards → lists → cards → subtasks</span> の順に親子関係を持ち、それぞれ外部キーで紐づく。</p>
+  id            UUID          PK
+  card_id       UUID          NOT NULL  FK -> cards.id   ON DELETE CASCADE
+  text          TEXT          NOT NULL
+  done          BOOLEAN       NOT NULL  DEFAULT FALSE</pre>
+        <p class="muted">9章のJSONモデルとほぼ1対1で対応する。<span class="mono">boards → lists → cards → subtasks</span> の順に親子関係を持ち、それぞれ外部キーで紐づく。並び順の列は、SQLの予約語 <span class="mono">order</span> を避けて <span class="mono">sort_order</span> とし、API(JSON)では <span class="mono">order</span> として公開する。IDはUUIDとし、アプリケーション側で採番する。</p>
 
         <h3>APIエンドポイント(案)</h3>
         <div class="table-scroll">
@@ -1176,8 +1178,77 @@ subtasks
         <p class="muted">カードの移動(リスト間移動・並び替え)は個別のエンドポイントを設けず、<span class="mono">PATCH /cards/:cardId</span> で <span class="mono">listId</span> と <span class="mono">order</span> を更新する形に統一する。</p>
       </section>
 
+      <section class="doc-section" id="techstack">
+        <h2><span class="num">11.</span>技術スタック</h2>
+        <p>REQ-14(サーバー保存)に向けた実装の技術構成を定める。フロントエンドはReact、バックエンドはJava + Spring Boot、DBはPostgreSQLとし、Next.jsは今回の対象外とする。それ以外の技術は、この構成に合わせて選定した。現行のバニラJS + localStorage版はREQ-01〜17の動作を確認したプロトタイプとして位置づけ、以降の実装は本章の構成で進める。</p>
+        <div class="structure-tree">[ブラウザ: React(TypeScript)の画面] &#8212;HTTP/JSON(REST)&#8594; [Spring Boot(Java 21)] &#8212;JDBC(JPA)&#8594; [PostgreSQL]</div>
+
+        <h3>フロントエンド</h3>
+        <div class="table-scroll">
+          <table class="req-table">
+            <thead>
+              <tr><th>項目</th><th>採用技術</th><th>選定理由</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>UIライブラリ</td><td class="mono">React 19</td><td>指定。ボード・リスト・カード・カレンダーをコンポーネント単位で構成する</td></tr>
+              <tr><td>言語</td><td class="mono">TypeScript</td><td>APIのレスポンス(boards / lists / cards)を型で表現でき、Javaの静的型付けと近い感覚で読み書きできる</td></tr>
+              <tr><td>ビルド・開発サーバー</td><td class="mono">Vite</td><td>Create React Appが非推奨のため。Next.jsを使わないSPA構成とする。開発時は <span class="mono">/api</span> へのリクエストをSpring Bootへプロキシする</td></tr>
+              <tr><td>サーバー状態管理</td><td class="mono">TanStack Query</td><td>APIの取得・更新とキャッシュを管理し、REQ-14のサーバー同期を簡潔に書けるようにする</td></tr>
+              <tr><td>ドラッグ&ドロップ</td><td class="mono">dnd-kit</td><td>現行のHTML5標準のドラッグ&ドロップに代え、REQ-11(同一リスト内の並び替え)に対応できるようにする</td></tr>
+              <tr><td>ルーティング</td><td class="mono">React Router</td><td>REQ-12(複数ボードの切り替え)に着手する際に導入する。それまでは使用しない</td></tr>
+              <tr><td>スタイル</td><td class="mono">CSS Modules</td><td>現行の <span class="mono">style.css</span> を流用しやすい。CSSフレームワークは導入しない</td></tr>
+              <tr><td>テスト・品質</td><td class="mono">Vitest / React Testing Library / ESLint / Prettier</td><td>Viteと統合されており、設定が少なくて済む</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>バックエンド</h3>
+        <div class="table-scroll">
+          <table class="req-table">
+            <thead>
+              <tr><th>項目</th><th>採用技術</th><th>選定理由</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>言語</td><td class="mono">Java 21 (LTS)</td><td>指定。Spring Boot 3系が要求するJava 17以上を満たす長期サポート版</td></tr>
+              <tr><td>フレームワーク</td><td class="mono">Spring Boot 3系以降の最新安定版</td><td>指定。具体的なバージョンは実装に着手する時点で確認して採用する</td></tr>
+              <tr><td>API</td><td class="mono">Spring Web</td><td>10章のRESTエンドポイントを実装する</td></tr>
+              <tr><td>永続化</td><td class="mono">Spring Data JPA(Hibernate)</td><td>リポジトリ経由でCRUDを実装し、パラメータバインドでSQLインジェクションを防ぐ</td></tr>
+              <tr><td>入力検証</td><td class="mono">Bean Validation</td><td>「空文字では追加できない」など、6章の受け入れ基準をAPI側でも担保する</td></tr>
+              <tr><td>DBマイグレーション</td><td class="mono">Flyway</td><td>10章のスキーマをSQLファイルとしてGitで管理し、コードと一緒にバージョン管理する</td></tr>
+              <tr><td>ビルド</td><td class="mono">Maven(Maven Wrapper)</td><td>解説が豊富で標準的。Maven Wrapperを同梱するため、Maven単体のインストールは不要</td></tr>
+              <tr><td>API仕様書</td><td class="mono">springdoc-openapi(Swagger UI)</td><td>エンドポイントを画面上で確認・試行でき、curlより動作確認が容易</td></tr>
+              <tr><td>テスト</td><td class="mono">JUnit 5 / Spring Boot Test / Testcontainers</td><td>本番と同じPostgreSQLを使ってテストできる(Dockerが必要)</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>データベース・開発環境</h3>
+        <div class="table-scroll">
+          <table class="req-table">
+            <thead>
+              <tr><th>項目</th><th>採用技術</th><th>選定理由</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>DB</td><td class="mono">PostgreSQL 16以降</td><td>指定。UUID・DATE・BOOLEAN型と、外部キーの <span class="mono">ON DELETE CASCADE</span> に対応している</td></tr>
+              <tr><td>DBのローカル実行</td><td class="mono">Docker Compose</td><td>DBを直接インストールせずに起動でき、環境を再現しやすい</td></tr>
+              <tr><td>フロントの実行環境</td><td class="mono">Node.js(LTS)</td><td>ViteとnpmがNode.jsを必要とするため(導入済み)</td></tr>
+              <tr><td>バージョン管理</td><td class="mono">Git / GitHub</td><td>これまでどおり</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>対象外</h3>
+        <ul class="nfr-list" style="grid-template-columns: 1fr;">
+          <li style="grid-template-columns: 1fr;"><span class="mono">Next.js</span>(SSR/SSG): 今回は対象外。ログインも検索エンジン向けの表示も不要なため、SPAで足りる</li>
+          <li style="grid-template-columns: 1fr;"><span class="mono">Spring Security</span>(認証・認可): REQ-13が対象外のため導入しない</li>
+        </ul>
+
+        <h3>環境準備</h3>
+        <p class="muted">2026-09-21時点で、開発用のMacにはNode.jsのみが導入済みで、JDK 21・Docker(またはPostgreSQL)は未導入。バックエンド実装の着手前に導入が必要になる(RISK-06)。</p>
+      </section>
+
       <section class="doc-section" id="constraints">
-        <h2><span class="num">11.</span>制約・前提</h2>
+        <h2><span class="num">12.</span>制約・前提</h2>
         <ul class="nfr-list" style="grid-template-columns: 1fr;">
           <li style="grid-template-columns: 1fr;">バックエンド・データベースを持たないため、ブラウザのデータを消去するとタスクも失われる</li>
           <li style="grid-template-columns: 1fr;">認証機能がないため、同じ端末・ブラウザを使う人であれば誰でも閲覧・編集できる</li>
@@ -1186,7 +1257,7 @@ subtasks
       </section>
 
       <section class="doc-section" id="risks">
-        <h2><span class="num">12.</span>リスクと対応策</h2>
+        <h2><span class="num">13.</span>リスクと対応策</h2>
         <p>制約・前提から想定される主なリスクと、その対応策を整理する。</p>
         <div class="table-scroll">
           <table class="req-table">
@@ -1215,7 +1286,7 @@ subtasks
                 <td class="req-id">RISK-03</td>
                 <td>認証機能がないため、同じ端末・ブラウザを使える人なら誰でも閲覧・編集できる</td>
                 <td><span class="pill pill-could">低</span></td>
-                <td>個人利用が前提のため現状は許容する。共有端末で使う場合は利用者自身が注意する</td>
+                <td>個人利用が前提のため現状は許容する。共有端末で使う場合は利用者自身が注意する。REQ-14の実装後はAPIも認証なしになるため、インターネットへ公開しない</td>
               </tr>
               <tr>
                 <td class="req-id">RISK-04</td>
@@ -1229,13 +1300,19 @@ subtasks
                 <td><span class="pill pill-should">中</span></td>
                 <td>Gitでバージョン管理し、問題発生時は直前のコミットに戻せる状態を保つ</td>
               </tr>
+              <tr>
+                <td class="req-id">RISK-06</td>
+                <td>Java(JDK)・Docker・PostgreSQLなど、バックエンド実装に必要な環境が未導入で、着手までに準備が必要。Dockerはお使いのmacOSのバージョンによっては最新版が動作しない可能性がある</td>
+                <td><span class="pill pill-should">中</span></td>
+                <td>着手前に環境を整え、READMEにセットアップ手順を残す。Dockerが使えない場合は、PostgreSQLを直接インストールして代替する(Testcontainersによるテストは使えないため、テスト用DBを別途用意する)</td>
+              </tr>
             </tbody>
           </table>
         </div>
       </section>
 
       <section class="doc-section" id="roadmap">
-        <h2><span class="num">13.</span>今後の拡張候補</h2>
+        <h2><span class="num">14.</span>今後の拡張候補</h2>
         <p>優先度が高いと考えられる順に、次の開発ステップの候補を挙げる。</p>
         <ol class="roadmap">
           <li>
@@ -1263,11 +1340,18 @@ subtasks
             <span class="step-num">04</span>
             <div>
               <p class="step-title">バックエンド・DB化(REQ-14)</p>
-              <p class="step-desc">10章のAPI・DBスキーマ設計をもとに、サーバー・DBを持つ構成へ移行する。技術スタックは未確定のため、選定から着手する。</p>
+              <p class="step-desc">10章のAPI・DBスキーマ設計をもとに、Java + Spring Boot + PostgreSQLでAPIサーバーを実装する(技術スタックは11章)。</p>
             </div>
           </li>
           <li>
             <span class="step-num">05</span>
+            <div>
+              <p class="step-title">フロントエンドのReact移行とAPI接続(REQ-14の完了)</p>
+              <p class="step-desc">現行のバニラJS版の機能をReact(TypeScript)のコンポーネントに移し、localStorageからAPI呼び出しに切り替える。</p>
+            </div>
+          </li>
+          <li>
+            <span class="step-num">06</span>
             <div>
               <p class="step-title">認証機能の追加(REQ-13)</p>
               <p class="step-desc">バックエンド化後、複数人での利用や公開を見据える場合にユーザー登録・ログインを追加する。</p>
@@ -1277,7 +1361,7 @@ subtasks
       </section>
 
       <section class="doc-section" id="kpi">
-        <h2><span class="num">14.</span>KPI・成功指標</h2>
+        <h2><span class="num">15.</span>KPI・成功指標</h2>
         <p>本プロジェクトの目的(1章)は「ツールとしての完成度」よりも「要件定義 → 実装 → Gitでのバージョン管理」という開発の流れを身につけることにある。そのため、KPIも機能の完成度だけでなく、この開発プロセスをどれだけ実践できたかを中心に定義する。</p>
         <div class="table-scroll">
           <table class="req-table">
@@ -1302,7 +1386,7 @@ subtasks
               <tr>
                 <td>要件定義書の改訂サイクル経験</td>
                 <td>実装内容に応じて要件定義書を複数回改訂し、コードとドキュメントを同期させる</td>
-                <td>15章の改訂履歴に記録されたバージョン数</td>
+                <td>16章の改訂履歴に記録されたバージョン数</td>
               </tr>
               <tr>
                 <td>Gitでの意味のある単位のコミット</td>
@@ -1311,7 +1395,7 @@ subtasks
               </tr>
               <tr>
                 <td>フロントエンドからバックエンドまでの到達度</td>
-                <td>10章で設計したAPI・DBスキーマを、実際にバックエンド実装まで到達させる(REQ-14)</td>
+                <td>10章で設計したAPI・DBスキーマを、Spring Boot + PostgreSQLで実装し、Reactの画面から呼び出せる状態まで到達させる(REQ-14)</td>
                 <td>REQ-14のステータスが「実装済み」になっているか</td>
               </tr>
               <tr>
@@ -1325,7 +1409,7 @@ subtasks
       </section>
 
       <section class="doc-section" id="changelog">
-        <h2><span class="num">15.</span>改訂履歴</h2>
+        <h2><span class="num">16.</span>改訂履歴</h2>
         <div class="table-scroll">
           <table class="req-table">
             <thead>
@@ -1376,6 +1460,11 @@ subtasks
                 <td class="mono">2026-09-21</td>
                 <td>画面表示の機能を追加(REQ-15 今日の日付、REQ-16 3ヶ月カレンダー、REQ-17 最終更新日時)。ユースケースUC-10・UC-11、画面構成、データモデルの記述を実装に合わせて更新。あわせて「今日」の判定をUTCから端末のローカル日付に修正</td>
               </tr>
+              <tr>
+                <td class="mono">v0.9</td>
+                <td class="mono">2026-09-21</td>
+                <td>技術スタックを確定し、11章として新設(フロントエンド: React / バックエンド: Java・Spring Boot / DB: PostgreSQL、Next.jsは対象外)。10章のDBスキーマをPostgreSQLの型に合わせて更新。非機能要件・リスク・ロードマップを新構成に合わせて更新し、章番号の参照ずれを修正</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -1384,7 +1473,7 @@ subtasks
     </main>
   </div>
 
-  <footer class="doc-footer">TB-REQ-001 &middot; v0.8 &middot; 2026-09-21</footer>
+  <footer class="doc-footer">TB-REQ-001 &middot; v0.9 &middot; 2026-09-21</footer>
 
 </div>
 
