@@ -513,7 +513,7 @@
       </div>
       <div>
         <dt>バージョン</dt>
-        <dd>v0.9</dd>
+        <dd>v0.10</dd>
       </div>
       <div>
         <dt>作成日</dt>
@@ -521,7 +521,7 @@
       </div>
       <div>
         <dt>更新日</dt>
-        <dd>2026-09-21</dd>
+        <dd>2026-09-22</dd>
       </div>
       <div>
         <dt>作成者</dt>
@@ -940,7 +940,7 @@
         <ul class="nfr-list">
           <li>
             <span class="label">環境構築</span>
-            <span>現行プロトタイプはビルドツールに依存せず、HTML・CSS・JSのみで完結する。React・Spring Boot構成への移行後は、Node.js・JDK・Docker等が必要になるため、READMEにセットアップ手順を記載し、少数のコマンドで起動できること</span>
+            <span>現行プロトタイプはビルドツールに依存せず、HTML・CSS・JSのみで完結する。React・Spring Boot構成への移行後は、Node.js・JDK・PostgreSQL等が必要になるため、READMEにセットアップ手順を記載し、少数のコマンドで起動できること</span>
           </li>
           <li>
             <span class="label">コードの可読性</span>
@@ -1217,7 +1217,7 @@ subtasks
               <tr><td>DBマイグレーション</td><td class="mono">Flyway</td><td>10章のスキーマをSQLファイルとしてGitで管理し、コードと一緒にバージョン管理する</td></tr>
               <tr><td>ビルド</td><td class="mono">Maven(Maven Wrapper)</td><td>解説が豊富で標準的。Maven Wrapperを同梱するため、Maven単体のインストールは不要</td></tr>
               <tr><td>API仕様書</td><td class="mono">springdoc-openapi(Swagger UI)</td><td>エンドポイントを画面上で確認・試行でき、curlより動作確認が容易</td></tr>
-              <tr><td>テスト</td><td class="mono">JUnit 5 / Spring Boot Test / Testcontainers</td><td>本番と同じPostgreSQLを使ってテストできる(Dockerが必要)</td></tr>
+              <tr><td>テスト</td><td class="mono">JUnit 5 / Spring Boot Test</td><td>テスト用DB(<span class="mono">taskboard_test</span>)を、開発用と同じPostgreSQLサーバー上に別に用意して使う。Dockerを導入した場合は、Testcontainersへ切り替えられる</td></tr>
             </tbody>
           </table>
         </div>
@@ -1230,7 +1230,7 @@ subtasks
             </thead>
             <tbody>
               <tr><td>DB</td><td class="mono">PostgreSQL 16以降</td><td>指定。UUID・DATE・BOOLEAN型と、外部キーの <span class="mono">ON DELETE CASCADE</span> に対応している</td></tr>
-              <tr><td>DBのローカル実行</td><td class="mono">Docker Compose</td><td>DBを直接インストールせずに起動でき、環境を再現しやすい</td></tr>
+              <tr><td>DBのローカル実行</td><td class="mono">PostgreSQL 16を直接インストール(Postgres.app同梱のバイナリ)</td><td>macOS 12ではDocker Desktopの最新版が動作しない可能性があり、Homebrewにも配布済みパッケージがないため。データはリポジトリの外(<span class="mono">~/pgdata</span>)に置く</td></tr>
               <tr><td>フロントの実行環境</td><td class="mono">Node.js(LTS)</td><td>ViteとnpmがNode.jsを必要とするため(導入済み)</td></tr>
               <tr><td>バージョン管理</td><td class="mono">Git / GitHub</td><td>これまでどおり</td></tr>
             </tbody>
@@ -1244,7 +1244,7 @@ subtasks
         </ul>
 
         <h3>環境準備</h3>
-        <p class="muted">2026-09-21時点で、開発用のMacにはNode.jsのみが導入済みで、JDK 21・Docker(またはPostgreSQL)は未導入。バックエンド実装の着手前に導入が必要になる(RISK-06)。</p>
+        <p class="muted">2026-09-22時点で、開発用のMacには次のものを導入済み。Node.js v24(LTS)、JDK 21(Eclipse Temurin 21.0.12.1)、PostgreSQL 16.15(Postgres.app同梱のバイナリ)。Dockerは導入せず、Mavenは単体では入れずMaven Wrapperを使う。DBは <span class="mono">taskboard</span>(ユーザーも <span class="mono">taskboard</span>)を作成済みで、開発用の接続情報はバックエンドの設定ファイルに記載する。PostgreSQLはmacOSの起動時に自動では立ち上がらないため、必要なときに手動で起動する(RISK-06)。</p>
       </section>
 
       <section class="doc-section" id="constraints">
@@ -1302,9 +1302,9 @@ subtasks
               </tr>
               <tr>
                 <td class="req-id">RISK-06</td>
-                <td>Java(JDK)・Docker・PostgreSQLなど、バックエンド実装に必要な環境が未導入で、着手までに準備が必要。Dockerはお使いのmacOSのバージョンによっては最新版が動作しない可能性がある</td>
+                <td>バックエンド実装に必要な環境(JDK・PostgreSQL)の導入に時間がかかる。お使いのmacOS 12ではHomebrewに配布済みパッケージがなく、ソースからのビルドが1時間以上かかっても終わらなかった。Dockerも最新版が動作しない可能性がある</td>
                 <td><span class="pill pill-should">中</span></td>
-                <td>着手前に環境を整え、READMEにセットアップ手順を残す。Dockerが使えない場合は、PostgreSQLを直接インストールして代替する(Testcontainersによるテストは使えないため、テスト用DBを別途用意する)</td>
+                <td>ビルド済みバイナリ(Temurin JDK、Postgres.app)を使って導入し、2026-09-22に完了した。セットアップ手順はバックエンドのREADMEに残す。今後、OSを更新する場合は導入済みの環境への影響を確認する</td>
               </tr>
             </tbody>
           </table>
@@ -1465,6 +1465,11 @@ subtasks
                 <td class="mono">2026-09-21</td>
                 <td>技術スタックを確定し、11章として新設(フロントエンド: React / バックエンド: Java・Spring Boot / DB: PostgreSQL、Next.jsは対象外)。10章のDBスキーマをPostgreSQLの型に合わせて更新。非機能要件・リスク・ロードマップを新構成に合わせて更新し、章番号の参照ずれを修正</td>
               </tr>
+              <tr>
+                <td class="mono">v0.10</td>
+                <td class="mono">2026-09-22</td>
+                <td>開発環境(JDK 21、PostgreSQL 16)を導入し、実際の環境に合わせて技術スタックの記述を更新(DBのローカル実行はDocker Composeから直接インストールへ、テストはTestcontainersからテスト用DBへ変更)。RISK-06を導入結果に合わせて更新</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -1473,7 +1478,7 @@ subtasks
     </main>
   </div>
 
-  <footer class="doc-footer">TB-REQ-001 &middot; v0.9 &middot; 2026-09-21</footer>
+  <footer class="doc-footer">TB-REQ-001 &middot; v0.10 &middot; 2026-09-22</footer>
 
 </div>
 
