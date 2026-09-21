@@ -513,7 +513,7 @@
       </div>
       <div>
         <dt>バージョン</dt>
-        <dd>v0.10</dd>
+        <dd>v0.11</dd>
       </div>
       <div>
         <dt>作成日</dt>
@@ -1146,8 +1146,9 @@ subtasks
   id            UUID          PK
   card_id       UUID          NOT NULL  FK -> cards.id   ON DELETE CASCADE
   text          TEXT          NOT NULL
-  done          BOOLEAN       NOT NULL  DEFAULT FALSE</pre>
-        <p class="muted">9章のJSONモデルとほぼ1対1で対応する。<span class="mono">boards → lists → cards → subtasks</span> の順に親子関係を持ち、それぞれ外部キーで紐づく。並び順の列は、SQLの予約語 <span class="mono">order</span> を避けて <span class="mono">sort_order</span> とし、API(JSON)では <span class="mono">order</span> として公開する。IDはUUIDとし、アプリケーション側で採番する。</p>
+  done          BOOLEAN       NOT NULL  DEFAULT FALSE
+  sort_order    INTEGER       NOT NULL</pre>
+        <p class="muted">9章のJSONモデルとほぼ1対1で対応する。<span class="mono">boards → lists → cards → subtasks</span> の順に親子関係を持ち、それぞれ外部キーで紐づく。並び順の列は、SQLの予約語 <span class="mono">order</span> を避けて <span class="mono">sort_order</span> とし、API(JSON)では <span class="mono">order</span> として公開する。IDはUUIDとし、アプリケーション側で採番する。小項目にも <span class="mono">sort_order</span> を持たせ、追加した順に表示できるようにしている(実装時に追加)。</p>
 
         <h3>APIエンドポイント(案)</h3>
         <div class="table-scroll">
@@ -1175,7 +1176,7 @@ subtasks
             </tbody>
           </table>
         </div>
-        <p class="muted">カードの移動(リスト間移動・並び替え)は個別のエンドポイントを設けず、<span class="mono">PATCH /cards/:cardId</span> で <span class="mono">listId</span> と <span class="mono">order</span> を更新する形に統一する。</p>
+        <p class="muted">カードの移動(リスト間移動・並び替え)は個別のエンドポイントを設けず、<span class="mono">PATCH /cards/:cardId</span> で <span class="mono">listId</span> と <span class="mono">order</span> を更新する形に統一する。PATCHでは、省略した項目は変更しない。期限(<span class="mono">due</span>)と終了日(<span class="mono">completedAt</span>)は、空文字を指定すると値を消し、値が無いときのレスポンスでは <span class="mono">null</span> を返す。エラー時は <span class="mono">{ "error": "..." }</span> を、入力不備は400、存在しないIDは404で返す。</p>
       </section>
 
       <section class="doc-section" id="techstack">
@@ -1210,13 +1211,13 @@ subtasks
             </thead>
             <tbody>
               <tr><td>言語</td><td class="mono">Java 21 (LTS)</td><td>指定。Spring Boot 3系が要求するJava 17以上を満たす長期サポート版</td></tr>
-              <tr><td>フレームワーク</td><td class="mono">Spring Boot 3系以降の最新安定版</td><td>指定。具体的なバージョンは実装に着手する時点で確認して採用する</td></tr>
+              <tr><td>フレームワーク</td><td class="mono">Spring Boot 4.1.1</td><td>指定。実装時点(2026-09-22)のSpring Initializrで選べる最新の安定版が4系だったため、4系を採用した</td></tr>
               <tr><td>API</td><td class="mono">Spring Web</td><td>10章のRESTエンドポイントを実装する</td></tr>
               <tr><td>永続化</td><td class="mono">Spring Data JPA(Hibernate)</td><td>リポジトリ経由でCRUDを実装し、パラメータバインドでSQLインジェクションを防ぐ</td></tr>
               <tr><td>入力検証</td><td class="mono">Bean Validation</td><td>「空文字では追加できない」など、6章の受け入れ基準をAPI側でも担保する</td></tr>
               <tr><td>DBマイグレーション</td><td class="mono">Flyway</td><td>10章のスキーマをSQLファイルとしてGitで管理し、コードと一緒にバージョン管理する</td></tr>
               <tr><td>ビルド</td><td class="mono">Maven(Maven Wrapper)</td><td>解説が豊富で標準的。Maven Wrapperを同梱するため、Maven単体のインストールは不要</td></tr>
-              <tr><td>API仕様書</td><td class="mono">springdoc-openapi(Swagger UI)</td><td>エンドポイントを画面上で確認・試行でき、curlより動作確認が容易</td></tr>
+              <tr><td>API仕様書</td><td class="mono">springdoc-openapi 3.1.1(Swagger UI)</td><td>エンドポイントを画面上で確認・試行でき、curlより動作確認が容易</td></tr>
               <tr><td>テスト</td><td class="mono">JUnit 5 / Spring Boot Test</td><td>テスト用DB(<span class="mono">taskboard_test</span>)を、開発用と同じPostgreSQLサーバー上に別に用意して使う。Dockerを導入した場合は、Testcontainersへ切り替えられる</td></tr>
             </tbody>
           </table>
@@ -1339,15 +1340,15 @@ subtasks
           <li>
             <span class="step-num">04</span>
             <div>
-              <p class="step-title">バックエンド・DB化(REQ-14)</p>
-              <p class="step-desc">10章のAPI・DBスキーマ設計をもとに、Java + Spring Boot + PostgreSQLでAPIサーバーを実装する(技術スタックは11章)。</p>
+              <p class="step-title">バックエンド・DB化(REQ-14)<span class="muted mono">(APIサーバーは実装済み)</span></p>
+              <p class="step-desc">10章のAPI・DBスキーマ設計をもとに、Java + Spring Boot + PostgreSQLでAPIサーバーを実装した(<span class="mono">backend/</span>。結合テスト6件を含む)。旧Node.js + Express + SQLite版は、比較用に <span class="mono">backend-node/</span> へ退避している。</p>
             </div>
           </li>
           <li>
             <span class="step-num">05</span>
             <div>
               <p class="step-title">フロントエンドのReact移行とAPI接続(REQ-14の完了)</p>
-              <p class="step-desc">現行のバニラJS版の機能をReact(TypeScript)のコンポーネントに移し、localStorageからAPI呼び出しに切り替える。</p>
+              <p class="step-desc">現行のバニラJS版の機能をReact(TypeScript)のコンポーネントに移し、localStorageからAPI呼び出しに切り替える。現行のフロントは「完了」リストをID(<span class="mono">done</span>)で識別しているが、APIのリストIDはUUIDのため、完了リストを見分ける項目をリストに追加する必要がある(DBマイグレーションで対応する)。</p>
             </div>
           </li>
           <li>
@@ -1470,6 +1471,11 @@ subtasks
                 <td class="mono">2026-09-22</td>
                 <td>開発環境(JDK 21、PostgreSQL 16)を導入し、実際の環境に合わせて技術スタックの記述を更新(DBのローカル実行はDocker Composeから直接インストールへ、テストはTestcontainersからテスト用DBへ変更)。RISK-06を導入結果に合わせて更新</td>
               </tr>
+              <tr>
+                <td class="mono">v0.11</td>
+                <td class="mono">2026-09-22</td>
+                <td>Spring Boot 4.1.1 + PostgreSQLのバックエンドを実装(<span class="mono">backend/</span>)。小項目に並び順(<span class="mono">sort_order</span>)を追加、APIの空値・エラーの扱いを10章に追記、11章とロードマップを実装に合わせて更新</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -1478,7 +1484,7 @@ subtasks
     </main>
   </div>
 
-  <footer class="doc-footer">TB-REQ-001 &middot; v0.10 &middot; 2026-09-22</footer>
+  <footer class="doc-footer">TB-REQ-001 &middot; v0.11 &middot; 2026-09-22</footer>
 
 </div>
 
