@@ -87,10 +87,11 @@ export function useUpdateCard(cardId: string) {
 }
 
 // order を送らないので、バックエンドが移動先リストの末尾に置く
-export function useMoveCard(cardId: string) {
+export function useMoveCard() {
   const refresh = useRefreshCards()
   return useMutation({
-    mutationFn: (listId: string) => apiPatch<CardResponse>(`/cards/${cardId}`, { listId }),
+    mutationFn: ({ cardId, listId }: { cardId: string; listId: string }) =>
+      apiPatch<CardResponse>(`/cards/${cardId}`, { listId }),
     onSuccess: refresh,
   })
 }

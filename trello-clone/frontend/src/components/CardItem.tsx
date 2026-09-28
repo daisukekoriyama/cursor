@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useMoveCard } from '../api/queries'
 import type { CardResponse, ListResponse } from '../api/types'
+import { writeDraggedCard } from '../utils/cardDrag'
 import { CardDetail } from './CardDetail'
 import styles from './CardItem.module.css'
 
@@ -17,14 +18,24 @@ function formatDate(date: string): string {
 
 export function CardItem({ card, lists }: Props) {
   const [open, setOpen] = useState(false)
-  const move = useMoveCard(card.id)
+  const [dragging, setDragging] = useState(false)
+  const move = useMoveCard()
   const inDoneList = lists.find((list) => list.id === card.listId)?.done ?? false
   // 並び順が先の完了リストへ移す。完了リストがないボードでは完了操作を出さない
   const doneList = lists.find((list) => list.done)
   const doneCount = card.subtasks.filter((subtask) => subtask.done).length
 
   return (
-    <li className={styles.card}>
+    // 詳細パネルを開いている間は、入力欄の文字選択などを妨げないようドラッグさせない
+    <li
+      className={`${styles.card} ${dragging ? styles.dragging : ''}`}
+      draggable={!open}
+      onDragStart={(e) => {
+        writeDraggedCard(e.dataTransfer, { cardId: card.id, listId: card.listId })
+        setDragging(true)
+      }}
+      onDragEnd={() => setDragging(false)}
+    >
       <div className={styles.titleRow}>
         {!inDoneList && doneList && (
           <input
@@ -32,7 +43,7 @@ export function CardItem({ card, lists }: Props) {
             checked={false}
             disabled={move.isPending}
             aria-label={`${card.text} を完了にする`}
-            onChange={() => move.mutate(doneList.id)}
+            onChange={() => move.mutate({ cardId: card.id, listId: doneList.id })}
           />
         )}
         <p className={styles.text}>{card.text}</p>

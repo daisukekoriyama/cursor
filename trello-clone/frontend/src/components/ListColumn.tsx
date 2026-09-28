@@ -1,5 +1,7 @@
 import { useState } from 'react'
+import { useMoveCard } from '../api/queries'
 import type { CardResponse, ListResponse } from '../api/types'
+import { isCardDrag, readDraggedCard } from '../utils/cardDrag'
 import { AddCardForm } from './AddCardForm'
 import { CardItem } from './CardItem'
 import { ListSettings } from './ListSettings'
@@ -13,9 +15,32 @@ interface Props {
 
 export function ListColumn({ list, lists, cards }: Props) {
   const [editing, setEditing] = useState(false)
+  const [dragOver, setDragOver] = useState(false)
+  const move = useMoveCard()
 
   return (
-    <section className={styles.column} aria-label={list.name}>
+    <section
+      className={`${styles.column} ${dragOver ? styles.dragOver : ''}`}
+      aria-label={list.name}
+      onDragOver={(e) => {
+        if (!isCardDrag(e.dataTransfer)) return
+        e.preventDefault()
+        e.dataTransfer.dropEffect = 'move'
+        setDragOver(true)
+      }}
+      onDragLeave={(e) => {
+        // 列の中の子要素へ移っただけのときは、ハイライトを消さない
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDragOver(false)
+      }}
+      onDrop={(e) => {
+        e.preventDefault()
+        setDragOver(false)
+        const dragged = readDraggedCard(e.dataTransfer)
+        if (dragged && dragged.listId !== list.id) {
+          move.mutate({ cardId: dragged.cardId, listId: list.id })
+        }
+      }}
+    >
       <h2 className={styles.title}>
         {list.name} <span className={styles.count}>{cards.length}</span>
         <button
@@ -34,6 +59,11 @@ export function ListColumn({ list, lists, cards }: Props) {
           <CardItem key={card.id} card={card} lists={lists} />
         ))}
       </ul>
+      {move.isError && (
+        <p role="alert" className={styles.error}>
+          カードを移動できませんでした。
+        </p>
+      )}
       <AddCardForm listId={list.id} />
     </section>
   )

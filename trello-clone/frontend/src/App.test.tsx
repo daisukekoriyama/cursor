@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { BoardDetail, CardResponse } from './api/types'
@@ -764,6 +764,129 @@ describe('App', () => {
           .map((item) => item.querySelector('p')?.textContent)
         expect(texts).toEqual(['期限あり', '期限なし'])
       })
+    })
+  })
+
+  describe('drag and drop', () => {
+    // jsdom には DataTransfer が無いので、ドラッグ中のデータを持つ最小の代用品を使う
+    function fakeDataTransfer() {
+      const store = new Map<string, string>()
+      return {
+        get types() {
+          return [...store.keys()]
+        },
+        setData: (type: string, value: string) => void store.set(type, value),
+        getData: (type: string) => store.get(type) ?? '',
+        effectAllowed: 'uninitialized',
+        dropEffect: 'none',
+      }
+    }
+
+    function stubDrag(failWrites = false) {
+      const fetchMock = vi.fn(async (input: string, init?: RequestInit) => {
+        const url = new URL(input, 'http://localhost')
+        if (init?.method && init.method !== 'GET')
+          return failWrites ? jsonResponse({}, false) : jsonResponse({})
+        if (url.pathname === '/api/boards')
+          return jsonResponse([{ id: BOARD_ID, name: board.name }])
+        if (url.pathname === `/api/boards/${BOARD_ID}`) return jsonResponse(board)
+        return jsonResponse([])
+      })
+      vi.stubGlobal('fetch', fetchMock)
+      return fetchMock
+    }
+
+    async function cardElement(listName: string, text: string) {
+      const column = await screen.findByRole('region', { name: listName })
+      return { column, item: within(column).getByText(text).closest('li')! }
+    }
+
+    const patches = (fetchMock: ReturnType<typeof stubDrag>) =>
+      fetchMock.mock.calls.filter(([, init]) => init?.method === 'PATCH')
+
+    it('moves the card to the column it is dropped on, sending only the list id', async () => {
+      const fetchMock = stubDrag()
+      renderApp()
+      const { item } = await cardElement('未着手', '要件定義書を読む')
+      const target = screen.getByRole('region', { name: '進行中' })
+      const dataTransfer = fakeDataTransfer()
+
+      fireEvent.dragStart(item, { dataTransfer })
+      fireEvent.dragOver(target, { dataTransfer })
+      fireEvent.drop(target, { dataTransfer })
+
+      await waitFor(() =>
+        expect(fetchMock).toHaveBeenCalledWith(
+          '/api/cards/c1',
+          expect.objectContaining({ method: 'PATCH', body: JSON.stringify({ listId: 'l2' }) }),
+        ),
+      )
+    })
+
+    it('does nothing when dropped on the same column', async () => {
+      const fetchMock = stubDrag()
+      renderApp()
+      const { column, item } = await cardElement('未着手', '要件定義書を読む')
+      const dataTransfer = fakeDataTransfer()
+
+      fireEvent.dragStart(item, { dataTransfer })
+      fireEvent.drop(column, { dataTransfer })
+
+      expect(patches(fetchMock)).toHaveLength(0)
+    })
+
+    it('ignores drops that are not card drags', async () => {
+      const fetchMock = stubDrag()
+      renderApp()
+      const target = await screen.findByRole('region', { name: '進行中' })
+      const dataTransfer = fakeDataTransfer()
+      dataTransfer.setData('text/plain', 'hello')
+
+      const notPrevented = fireEvent.dragOver(target, { dataTransfer })
+      fireEvent.drop(target, { dataTransfer })
+
+      expect(notPrevented).toBe(true)
+      expect(patches(fetchMock)).toHaveLength(0)
+    })
+
+    it('accepts card drags on dragover so the drop is allowed', async () => {
+      stubDrag()
+      renderApp()
+      const { item } = await cardElement('未着手', '要件定義書を読む')
+      const target = screen.getByRole('region', { name: '進行中' })
+      const dataTransfer = fakeDataTransfer()
+
+      fireEvent.dragStart(item, { dataTransfer })
+      const notPrevented = fireEvent.dragOver(target, { dataTransfer })
+
+      expect(notPrevented).toBe(false)
+      expect(dataTransfer.dropEffect).toBe('move')
+    })
+
+    it('is draggable only while the detail panel is closed', async () => {
+      stubDrag()
+      renderApp()
+      const { column, item } = await cardElement('未着手', '要件定義書を読む')
+      expect(item).toHaveAttribute('draggable', 'true')
+
+      await userEvent.click(within(column).getByRole('button', { name: '要件定義書を読む の詳細' }))
+
+      expect(item).toHaveAttribute('draggable', 'false')
+    })
+
+    it('shows an error in the column when the move fails', async () => {
+      stubDrag(true)
+      renderApp()
+      const { item } = await cardElement('未着手', '要件定義書を読む')
+      const target = screen.getByRole('region', { name: '進行中' })
+      const dataTransfer = fakeDataTransfer()
+
+      fireEvent.dragStart(item, { dataTransfer })
+      fireEvent.drop(target, { dataTransfer })
+
+      expect(await within(target).findByRole('alert')).toHaveTextContent(
+        'カードを移動できませんでした',
+      )
     })
   })
 })

@@ -29,3 +29,14 @@
   margin-left: 8px;
   font-size: 12px;
 }
+
+.dragOver {
+  background: #dcdfe6;
+  outline: 2px dashed #0d5b8c;
+}
+
+.error {
+  margin: 8px 0 0;
+  color: #c9372c;
+  font-size: 12px;
+}
