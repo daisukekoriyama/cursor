@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
@@ -18,6 +19,9 @@ public class Board {
 
     @Column(nullable = false)
     private String name;
+
+    @Column(name = "updated_at")
+    private Instant updatedAt;
 
     protected Board() {
     }
@@ -36,5 +40,13 @@ public class Board {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public Instant getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(Instant updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }

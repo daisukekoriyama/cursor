@@ -513,7 +513,7 @@
       </div>
       <div>
         <dt>バージョン</dt>
-        <dd>v0.26</dd>
+        <dd>v0.28</dd>
       </div>
       <div>
         <dt>作成日</dt>
@@ -1167,6 +1167,7 @@
         <pre class="code-block">boards
   id            UUID          PK
   name          VARCHAR(255)  NOT NULL
+  updated_at    TIMESTAMPTZ   NULL      (リスト・カード・小項目を最後に変更した日時。NULLはまだ更新されていない)
 
 lists
   id            UUID          PK
@@ -1204,7 +1205,7 @@ subtasks
             <tbody>
               <tr><td class="mono">GET</td><td class="mono">/boards</td><td>ボード一覧を取得する</td></tr>
               <tr><td class="mono">POST</td><td class="mono">/boards</td><td>ボードを新規作成する</td></tr>
-              <tr><td class="mono">GET</td><td class="mono">/boards/:boardId</td><td>指定ボードのリスト・カード・小項目を含めて取得する</td></tr>
+              <tr><td class="mono">GET</td><td class="mono">/boards/:boardId</td><td>指定ボードのリスト・カード・小項目を含めて取得する。最終更新の日時(<span class="mono">updatedAt</span>。ISO 8601。まだ変更がなければ <span class="mono">null</span>)も返す</td></tr>
               <tr><td class="mono">POST</td><td class="mono">/boards/:boardId/lists</td><td>リストを追加する</td></tr>
               <tr><td class="mono">PATCH</td><td class="mono">/lists/:listId</td><td>リスト名・並び順・完了リストかどうか(<span class="mono">done</span>)を変更する</td></tr>
               <tr><td class="mono">DELETE</td><td class="mono">/lists/:listId</td><td>リストを削除する(配下のカードも削除)</td></tr>
@@ -1219,6 +1220,7 @@ subtasks
             </tbody>
           </table>
         </div>
+        <p class="muted">最終更新(REQ-17)はサーバー側で持つ。リスト・カード・小項目の追加・更新・削除のたびに、所属するボードの <span class="mono">updated_at</span> を現在時刻にする(カードを別のボードのリストへ移すときは移動元・移動先の両方)。ボード自体の作成や、読み取り(GET)、入力不備などで失敗した書き込みでは更新しない。これにより、別の端末での変更も同じ値に反映される。</p>
         <p class="muted">カードの移動(リスト間移動・並び替え)は個別のエンドポイントを設けず、<span class="mono">PATCH /cards/:cardId</span> で <span class="mono">listId</span> と <span class="mono">order</span> を更新する形に統一する。PATCHでは、省略した項目は変更しない。ただし、<span class="mono">order</span> を省略して <span class="mono">listId</span> だけを別のリストに変えたときは、移動先リストの末尾に置く。また、終了日は移動に連動する。完了リスト(<span class="mono">done</span> が true)へ移すと、終了日が空のときだけ今日の日付(サーバーの現地日付)を入れる。完了リストから完了でないリストへ移すと、終了日を消す。完了リスト同士の移動では変えない。<span class="mono">completedAt</span> を明示したときは、その値を優先する。完了リストへ直接カードを追加した場合も、今日の日付を入れる。リストのIDはUUIDのため、完了リストは名前ではなくこのフラグで見分ける(マイグレーションV3で、名前が「完了」の既存リストを完了リストにした)。期限(<span class="mono">due</span>)と終了日(<span class="mono">completedAt</span>)は、空文字を指定すると値を消し、値が無いときのレスポンスでは <span class="mono">null</span> を返す。エラー時は <span class="mono">{ "error": "..." }</span> を、入力不備は400、存在しないIDは404で返す。</p>
       </section>
 
@@ -1392,7 +1394,7 @@ subtasks
             <span class="step-num">04</span>
             <div>
               <p class="step-title">バックエンド・DB化(REQ-14)<span class="muted mono">(APIサーバーは実装済み)</span></p>
-              <p class="step-desc">10章のAPI・DBスキーマ設計をもとに、Java + Spring Boot + PostgreSQLでAPIサーバーを実装した(<span class="mono">backend/</span>。結合テスト13件を含む)。旧Node.js + Express + SQLite版は、比較用に <span class="mono">backend-node/</span> へ退避している。</p>
+              <p class="step-desc">10章のAPI・DBスキーマ設計をもとに、Java + Spring Boot + PostgreSQLでAPIサーバーを実装した(<span class="mono">backend/</span>。結合テスト17件を含む)。旧Node.js + Express + SQLite版は、比較用に <span class="mono">backend-node/</span> へ退避している。</p>
             </div>
           </li>
           <li>
@@ -1602,6 +1604,11 @@ subtasks
                 <td class="mono">2026-09-28</td>
                 <td>React版に、ブラウザ標準のドラッグ&ドロップでのカードのリスト間移動(REQ-03)を実装したことを反映。8章(画面)、11章の技術選定(ドラッグ&ドロップをdnd-kitからブラウザ標準に変更し、dnd-kitはREQ-11で再検討)、12章の制約・進め方の記述を更新</td>
               </tr>
+              <tr>
+                <td class="mono">v0.28</td>
+                <td class="mono">2026-09-28</td>
+                <td>最終更新(REQ-17)の方針をサーバー側で持つ形に決め、バックエンドに実装した(boards.updated_at、マイグレーションV4)。10章のDB設計とAPI(GET /boards/:boardId)に追記し、結合テストを17件に修正。画面での表示は未実装</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -1610,7 +1617,7 @@ subtasks
     </main>
   </div>
 
-  <footer class="doc-footer">TB-REQ-001 &middot; v0.26 &middot; 2026-09-28</footer>
+  <footer class="doc-footer">TB-REQ-001 &middot; v0.28 &middot; 2026-09-28</footer>
 
 </div>
 
