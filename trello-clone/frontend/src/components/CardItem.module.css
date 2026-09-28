@@ -56,3 +56,7 @@
   color: #c9372c;
   font-size: 12px;
 }
+
+.dragging {
+  opacity: 0.5;
+}

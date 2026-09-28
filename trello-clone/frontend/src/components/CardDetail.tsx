@@ -68,7 +68,7 @@ function EditCardForm({ card }: Props) {
 }
 
 function MoveCardSelect({ card, lists }: Props & { lists: ListResponse[] }) {
-  const move = useMoveCard(card.id)
+  const move = useMoveCard()
 
   return (
     <div className={styles.row}>
@@ -77,7 +77,7 @@ function MoveCardSelect({ card, lists }: Props & { lists: ListResponse[] }) {
         <select
           value={card.listId}
           disabled={move.isPending}
-          onChange={(e) => move.mutate(e.target.value)}
+          onChange={(e) => move.mutate({ cardId: card.id, listId: e.target.value })}
         >
           {lists.map((list) => (
             <option key={list.id} value={list.id}>
