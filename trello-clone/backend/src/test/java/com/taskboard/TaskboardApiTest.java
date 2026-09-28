@@ -184,6 +184,71 @@ class TaskboardApiTest {
         mvc.perform(get("/boards/not-a-uuid")).andExpect(status().isBadRequest());
     }
 
+    @Test
+    void cardCanBeReadByIdWithSubtasks() throws Exception {
+        String boardId = createId("/boards", "{\"name\":\"test-read\"}");
+        String listId = createId("/boards/" + boardId + "/lists", "{\"name\":\"未着手\"}");
+        String cardId = createId("/lists/" + listId + "/cards", "{\"text\":\"読むカード\",\"due\":\"2026-10-01\"}");
+        createId("/cards/" + cardId + "/subtasks", "{\"text\":\"小項目\"}");
+
+        mvc.perform(get("/cards/" + cardId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(cardId))
+                .andExpect(jsonPath("$.text").value("読むカード"))
+                .andExpect(jsonPath("$.due").value("2026-10-01"))
+                .andExpect(jsonPath("$.subtasks[0].text").value("小項目"));
+
+        mvc.perform(get("/cards/00000000-0000-4000-8000-00000000ffff")).andExpect(status().isNotFound());
+        mvc.perform(get("/cards/not-a-uuid")).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void cardsCanBeSearchedByKeywordListBoardAndCompletion() throws Exception {
+        String boardId = createId("/boards", "{\"name\":\"test-search\"}");
+        String otherBoardId = createId("/boards", "{\"name\":\"test-search-other\"}");
+        String todoId = createId("/boards/" + boardId + "/lists", "{\"name\":\"未着手\"}");
+        String doneId = createId("/boards/" + boardId + "/lists", "{\"name\":\"完了\"}");
+        String otherListId = createId("/boards/" + otherBoardId + "/lists", "{\"name\":\"未着手\"}");
+        createId("/lists/" + todoId + "/cards", "{\"text\":\"Apple pie\"}");
+        String doneCard = createId("/lists/" + doneId + "/cards", "{\"text\":\"apple juice 100%\"}");
+        createId("/lists/" + otherListId + "/cards", "{\"text\":\"apple in other board\"}");
+        mvc.perform(patch("/cards/" + doneCard)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"completedAt\":\"2026-09-28\"}"))
+                .andExpect(status().isOk());
+        createId("/cards/" + doneCard + "/subtasks", "{\"text\":\"sub\"}");
+
+        // 大文字小文字を区別しない部分一致 + ボード絞り込み(リスト順 → カード順)
+        mvc.perform(get("/cards").param("boardId", boardId).param("keyword", "APPLE"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].text").value("Apple pie"))
+                .andExpect(jsonPath("$[1].text").value("apple juice 100%"))
+                .andExpect(jsonPath("$[1].subtasks[0].text").value("sub"));
+
+        // LIKEのワイルドカードは文字として扱う
+        mvc.perform(get("/cards").param("boardId", boardId).param("keyword", "%"))
+                .andExpect(jsonPath("$.length()").value(1));
+        mvc.perform(get("/cards").param("boardId", boardId).param("keyword", "_"))
+                .andExpect(jsonPath("$.length()").value(0));
+
+        // リスト・完了状態の絞り込み
+        mvc.perform(get("/cards").param("listId", todoId))
+                .andExpect(jsonPath("$.length()").value(1));
+        mvc.perform(get("/cards").param("boardId", boardId).param("completed", "true"))
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].id").value(doneCard));
+        mvc.perform(get("/cards").param("boardId", boardId).param("completed", "false"))
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].text").value("Apple pie"));
+
+        // 該当なしは空配列、不正なIDは400
+        mvc.perform(get("/cards").param("boardId", boardId).param("keyword", "zzz"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+        mvc.perform(get("/cards").param("boardId", "bad")).andExpect(status().isBadRequest());
+    }
+
     private String createId(String url, String json) throws Exception {
         String body = mvc.perform(post(url).contentType(MediaType.APPLICATION_JSON).content(json))
                 .andExpect(status().isCreated())

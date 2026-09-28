@@ -82,6 +82,30 @@ public class TaskboardService {
                         .toList());
     }
 
+    @Transactional(readOnly = true)
+    public CardResponse getCard(UUID cardId) {
+        Card card = cards.findById(cardId).orElseThrow(notFound("card"));
+        return toResponse(card, subtasksOf(List.of(cardId)).getOrDefault(cardId, List.of()));
+    }
+
+    /** 条件はすべてAND。keyword は大文字小文字を区別しない部分一致。省略した条件は絞り込まない。 */
+    @Transactional(readOnly = true)
+    public List<CardResponse> searchCards(UUID boardId, UUID listId, String keyword, Boolean completed) {
+        String trimmed = keyword == null ? "" : keyword.trim().toLowerCase();
+        String pattern = "%" + trimmed.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%";
+        List<Card> found = cards.search(boardId, listId, pattern, completed);
+        Map<UUID, List<SubtaskResponse>> subtasksByCard = subtasksOf(found.stream().map(Card::getId).toList());
+        return found.stream().map(c -> toResponse(c, subtasksByCard.getOrDefault(c.getId(), List.of()))).toList();
+    }
+
+    private Map<UUID, List<SubtaskResponse>> subtasksOf(List<UUID> cardIds) {
+        if (cardIds.isEmpty()) {
+            return Map.of();
+        }
+        return subtasks.findByCardIdInOrderBySortOrderAsc(cardIds).stream()
+                .collect(Collectors.groupingBy(Subtask::getCardId, Collectors.mapping(this::toResponse, Collectors.toList())));
+    }
+
     public ListResponse createList(UUID boardId, CreateListRequest request) {
         if (!boards.existsById(boardId)) {
             throw new NotFoundException("board not found");

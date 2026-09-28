@@ -1168,6 +1168,8 @@ subtasks
               <tr><td class="mono">PATCH</td><td class="mono">/lists/:listId</td><td>リスト名・並び順を変更する</td></tr>
               <tr><td class="mono">DELETE</td><td class="mono">/lists/:listId</td><td>リストを削除する(配下のカードも削除)</td></tr>
               <tr><td class="mono">POST</td><td class="mono">/lists/:listId/cards</td><td>カードを追加する</td></tr>
+              <tr><td class="mono">GET</td><td class="mono">/cards</td><td>カードを検索する。クエリ <span class="mono">keyword</span>(大文字小文字を区別しない部分一致)・<span class="mono">boardId</span>・<span class="mono">listId</span>・<span class="mono">completed</span>(true/false)で絞り込み、すべてAND条件。省略した条件は絞り込まない。リスト順→カード順で返す</td></tr>
+              <tr><td class="mono">GET</td><td class="mono">/cards/:cardId</td><td>カード1件を小項目つきで取得する</td></tr>
               <tr><td class="mono">PATCH</td><td class="mono">/cards/:cardId</td><td>カードのテキスト・期限・所属リスト・並び順を更新する</td></tr>
               <tr><td class="mono">DELETE</td><td class="mono">/cards/:cardId</td><td>カードを削除する</td></tr>
               <tr><td class="mono">POST</td><td class="mono">/cards/:cardId/subtasks</td><td>小項目を追加する</td></tr>
