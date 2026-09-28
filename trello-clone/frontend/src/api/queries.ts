@@ -135,6 +135,14 @@ export function useRenameList(listId: string, boardId: string) {
   })
 }
 
+export function useSetListDone(listId: string, boardId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (done: boolean) => apiPatch<ListResponse>(`/lists/${listId}`, { done }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['boards', boardId] }),
+  })
+}
+
 // リストを消すとカードも消えるので、検索結果のキャッシュも再取得する
 export function useDeleteList(listId: string) {
   const refresh = useRefreshCards()

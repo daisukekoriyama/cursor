@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { useDeleteList, useRenameList } from '../api/queries'
+import { useDeleteList, useRenameList, useSetListDone } from '../api/queries'
 import type { ListResponse } from '../api/types'
 import styles from './ListSettings.module.css'
 
@@ -10,6 +10,7 @@ interface Props {
 export function ListSettings({ list }: Props) {
   const [name, setName] = useState(list.name)
   const rename = useRenameList(list.id, list.boardId)
+  const setDone = useSetListDone(list.id, list.boardId)
   const remove = useDeleteList(list.id)
 
   function submit(e: FormEvent) {
@@ -40,12 +41,25 @@ export function ListSettings({ list }: Props) {
           名称を保存
         </button>
       </form>
+      <label>
+        <input
+          type="checkbox"
+          checked={list.done}
+          disabled={setDone.isPending}
+          onChange={(e) => setDone.mutate(e.target.checked)}
+        />{' '}
+        完了リストにする
+      </label>
       <button type="button" disabled={remove.isPending} onClick={confirmAndDelete}>
         リストを削除
       </button>
-      {(rename.isError || remove.isError) && (
+      {(rename.isError || setDone.isError || remove.isError) && (
         <p role="alert" className={styles.error}>
-          {rename.isError ? 'リスト名を保存できませんでした。' : 'リストを削除できませんでした。'}
+          {remove.isError
+            ? 'リストを削除できませんでした。'
+            : rename.isError
+              ? 'リスト名を保存できませんでした。'
+              : '完了リストの設定を変更できませんでした。'}
         </p>
       )}
     </div>

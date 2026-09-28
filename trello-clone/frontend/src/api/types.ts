@@ -10,6 +10,8 @@ export interface ListResponse {
   boardId: string
   name: string
   order: number
+  // 完了リストか。ここへ移したカードには終了日が自動で入る
+  done: boolean
 }
 
 export interface SubtaskResponse {
