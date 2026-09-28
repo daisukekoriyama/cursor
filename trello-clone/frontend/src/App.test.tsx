@@ -32,6 +32,7 @@ const board: BoardDetail = {
     { id: 'l3', boardId: BOARD_ID, name: '完了', order: 2, done: true },
   ],
   cards,
+  updatedAt: null,
 }
 
 const OTHER_BOARD: BoardDetail = {
@@ -39,6 +40,7 @@ const OTHER_BOARD: BoardDetail = {
   name: '別のボード',
   lists: [{ id: 'x1', boardId: 'board-2', name: '準備中', order: 0, done: false }],
   cards: [card('x-c1', 'x1', '別ボードのカード')],
+  updatedAt: null,
 }
 
 function jsonResponse(body: unknown, ok = true) {
@@ -289,7 +291,13 @@ describe('App', () => {
         }
         if (url.pathname === '/api/boards') return jsonResponse(summaries)
         if (url.pathname === '/api/boards/board-new')
-          return jsonResponse({ id: 'board-new', name: '新しいボード', lists: [], cards: [] })
+          return jsonResponse({
+            id: 'board-new',
+            name: '新しいボード',
+            lists: [],
+            cards: [],
+            updatedAt: null,
+          })
         if (url.pathname === `/api/boards/${BOARD_ID}`) return jsonResponse(board)
         return jsonResponse([])
       })
@@ -952,6 +960,48 @@ describe('App', () => {
       await screen.findByText('該当するカードはありません。')
 
       expect(calendar.querySelectorAll('[title]')).toHaveLength(1)
+    })
+  })
+
+  describe('last updated', () => {
+    it('says the board has not been updated yet when updatedAt is null', async () => {
+      stubApi()
+      renderApp()
+
+      expect(await screen.findByText('最終更新: まだ更新されていません')).toBeInTheDocument()
+    })
+
+    it('shows the time in local time when the board has been updated', async () => {
+      board.updatedAt = new Date(2026, 8, 28, 15, 30).toISOString()
+      stubApi()
+      renderApp()
+
+      expect(await screen.findByText('最終更新: 2026/09/28 15:30')).toBeInTheDocument()
+      board.updatedAt = null
+    })
+
+    it('refreshes after a write, using the refetched board', async () => {
+      let updatedAt: string | null = null
+      const fetchMock = vi.fn(async (input: string, init?: RequestInit) => {
+        const url = new URL(input, 'http://localhost')
+        if (init?.method === 'POST') {
+          updatedAt = new Date(2026, 8, 28, 16, 45).toISOString()
+          return jsonResponse(card('c-new', 'l1', '追加'))
+        }
+        if (url.pathname === '/api/boards')
+          return jsonResponse([{ id: BOARD_ID, name: board.name }])
+        if (url.pathname === `/api/boards/${BOARD_ID}`) return jsonResponse({ ...board, updatedAt })
+        return jsonResponse([])
+      })
+      vi.stubGlobal('fetch', fetchMock)
+      renderApp()
+      expect(await screen.findByText('最終更新: まだ更新されていません')).toBeInTheDocument()
+      const column = screen.getByRole('region', { name: '未着手' })
+
+      await userEvent.type(within(column).getByLabelText('カードの内容'), '追加')
+      await userEvent.click(within(column).getByRole('button', { name: '追加' }))
+
+      expect(await screen.findByText('最終更新: 2026/09/28 16:45')).toBeInTheDocument()
     })
   })
 })
