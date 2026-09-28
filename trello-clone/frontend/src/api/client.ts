@@ -27,14 +27,27 @@ export async function apiGet<T>(
   return (await response.json()) as T
 }
 
-export async function apiPost<T>(path: string, body: unknown): Promise<T> {
+async function send(method: string, path: string, body?: unknown): Promise<Response> {
   const response = await fetch(`${API_BASE}${path}`, {
-    method: 'POST',
+    method,
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+    body: body === undefined ? undefined : JSON.stringify(body),
   })
   if (!response.ok) {
-    throw new ApiError(response.status, `POST ${path} failed (${response.status})`)
+    throw new ApiError(response.status, `${method} ${path} failed (${response.status})`)
   }
-  return (await response.json()) as T
+  return response
+}
+
+export async function apiPost<T>(path: string, body: unknown): Promise<T> {
+  return (await (await send('POST', path, body)).json()) as T
+}
+
+export async function apiPatch<T>(path: string, body: unknown): Promise<T> {
+  return (await (await send('PATCH', path, body)).json()) as T
+}
+
+// 成功すると 204 No Content が返るので、本文は読まない
+export async function apiDelete(path: string): Promise<void> {
+  await send('DELETE', path)
 }

@@ -343,4 +343,158 @@ describe('App', () => {
       expect(input).toHaveValue('失敗')
     })
   })
+
+  describe('card detail', () => {
+    function stubWrites(failWrites = false) {
+      const fetchMock = vi.fn(async (input: string, init?: RequestInit) => {
+        const url = new URL(input, 'http://localhost')
+        if (init?.method && init.method !== 'GET') {
+          if (failWrites) return jsonResponse({}, false)
+          return init.method === 'DELETE'
+            ? { ok: true, status: 204, json: async () => Promise.reject(new Error('no body')) }
+            : jsonResponse({})
+        }
+        if (url.pathname === '/api/boards')
+          return jsonResponse([{ id: BOARD_ID, name: board.name }])
+        if (url.pathname === `/api/boards/${BOARD_ID}`) return jsonResponse(board)
+        return jsonResponse([])
+      })
+      vi.stubGlobal('fetch', fetchMock)
+      return fetchMock
+    }
+
+    async function openDetail() {
+      const column = await screen.findByRole('region', { name: '未着手' })
+      await userEvent.click(within(column).getByRole('button', { name: '要件定義書を読む の詳細' }))
+      return column
+    }
+
+    function calls(fetchMock: ReturnType<typeof stubWrites>, method: string) {
+      return fetchMock.mock.calls.filter(([, init]) => init?.method === method)
+    }
+
+    it('is closed by default and toggles open and closed', async () => {
+      stubWrites()
+      renderApp()
+      const column = await screen.findByRole('region', { name: '未着手' })
+      expect(within(column).queryByLabelText('カードの内容を編集')).not.toBeInTheDocument()
+
+      await openDetail()
+      expect(within(column).getByLabelText('カードの内容を編集')).toHaveValue('要件定義書を読む')
+      expect(within(column).getByLabelText('期限を編集')).toHaveValue('2026-10-05')
+
+      await userEvent.click(within(column).getByRole('button', { name: '要件定義書を読む の詳細' }))
+      expect(within(column).queryByLabelText('カードの内容を編集')).not.toBeInTheDocument()
+    })
+
+    it('patches the edited text and due date', async () => {
+      const fetchMock = stubWrites()
+      renderApp()
+      const column = await openDetail()
+
+      const text = within(column).getByLabelText('カードの内容を編集')
+      await userEvent.clear(text)
+      await userEvent.type(text, ' 書き換えた ')
+      await userEvent.clear(within(column).getByLabelText('期限を編集'))
+      await userEvent.click(within(column).getByRole('button', { name: '保存' }))
+
+      await waitFor(() =>
+        expect(fetchMock).toHaveBeenCalledWith(
+          '/api/cards/c1',
+          expect.objectContaining({
+            method: 'PATCH',
+            body: JSON.stringify({ text: '書き換えた', due: '' }),
+          }),
+        ),
+      )
+    })
+
+    it('does not save blank text', async () => {
+      stubWrites()
+      renderApp()
+      const column = await openDetail()
+
+      await userEvent.clear(within(column).getByLabelText('カードの内容を編集'))
+
+      expect(within(column).getByRole('button', { name: '保存' })).toBeDisabled()
+    })
+
+    it('deletes the card only after confirmation', async () => {
+      const fetchMock = stubWrites()
+      const confirm = vi
+        .spyOn(window, 'confirm')
+        .mockReturnValueOnce(false)
+        .mockReturnValueOnce(true)
+      renderApp()
+      const column = await openDetail()
+
+      await userEvent.click(within(column).getByRole('button', { name: 'カードを削除' }))
+      expect(calls(fetchMock, 'DELETE')).toHaveLength(0)
+
+      await userEvent.click(within(column).getByRole('button', { name: 'カードを削除' }))
+      await waitFor(() =>
+        expect(fetchMock).toHaveBeenCalledWith(
+          '/api/cards/c1',
+          expect.objectContaining({ method: 'DELETE' }),
+        ),
+      )
+      expect(confirm).toHaveBeenCalledTimes(2)
+      confirm.mockRestore()
+    })
+
+    it('adds a subtask and clears the input', async () => {
+      const fetchMock = stubWrites()
+      renderApp()
+      const column = await openDetail()
+
+      const input = within(column).getByLabelText('小項目の内容')
+      await userEvent.type(input, ' 12章を読む ')
+      await userEvent.click(within(column).getByRole('button', { name: '小項目追加' }))
+
+      await waitFor(() =>
+        expect(fetchMock).toHaveBeenCalledWith(
+          '/api/cards/c1/subtasks',
+          expect.objectContaining({ method: 'POST', body: JSON.stringify({ text: '12章を読む' }) }),
+        ),
+      )
+      await waitFor(() => expect(input).toHaveValue(''))
+    })
+
+    it('toggles and deletes a subtask', async () => {
+      const fetchMock = stubWrites()
+      renderApp()
+      const column = await openDetail()
+
+      await userEvent.click(within(column).getByRole('checkbox', { name: '11章を読む' }))
+      await waitFor(() =>
+        expect(fetchMock).toHaveBeenCalledWith(
+          '/api/subtasks/s2',
+          expect.objectContaining({ method: 'PATCH', body: JSON.stringify({ done: true }) }),
+        ),
+      )
+      expect(within(column).getByRole('checkbox', { name: '10章を読む' })).toBeChecked()
+
+      await userEvent.click(
+        within(column).getByRole('button', { name: '小項目「10章を読む」を削除' }),
+      )
+      await waitFor(() =>
+        expect(fetchMock).toHaveBeenCalledWith(
+          '/api/subtasks/s1',
+          expect.objectContaining({ method: 'DELETE' }),
+        ),
+      )
+    })
+
+    it('shows an error when saving fails', async () => {
+      stubWrites(true)
+      renderApp()
+      const column = await openDetail()
+
+      await userEvent.click(within(column).getByRole('button', { name: '保存' }))
+
+      expect(await within(column).findByRole('alert')).toHaveTextContent(
+        'カードを保存できませんでした',
+      )
+    })
+  })
 })
