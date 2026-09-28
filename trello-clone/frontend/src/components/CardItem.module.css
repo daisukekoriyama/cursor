@@ -1,0 +1,37 @@
+.card {
+  list-style: none;
+  padding: 8px 10px;
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 1px 0 rgba(9, 30, 66, 0.25);
+}
+
+.text {
+  margin: 0;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.badges:empty {
+  display: none;
+}
+
+.badge {
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: #ebecf0;
+  color: #5e6c84;
+  font-size: 12px;
+}
+
+.doneBadge {
+  background: #61bd4f;
+  color: #fff;
+}

@@ -1,0 +1,20 @@
+.searchBar {
+  display: flex;
+  gap: 8px;
+  padding: 0 24px 12px;
+}
+
+.keyword {
+  flex: 0 1 320px;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.completed {
+  padding: 6px 8px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+}

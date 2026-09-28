@@ -6,3 +6,7 @@ body {
     'Hiragino Sans',
     sans-serif;
 }
+
+* {
+  box-sizing: border-box;
+}

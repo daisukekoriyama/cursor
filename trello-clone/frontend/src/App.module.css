@@ -1,0 +1,27 @@
+.app {
+  min-height: 100vh;
+  background: #0d5b8c;
+  color: #172b4d;
+}
+
+.header {
+  padding: 12px 24px 8px;
+}
+
+.title {
+  margin: 0;
+  color: #fff;
+  font-size: 20px;
+}
+
+.boardName {
+  margin: 2px 0 0;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 13px;
+}
+
+.message {
+  margin: 0;
+  padding: 8px 24px;
+  color: #fff;
+}
