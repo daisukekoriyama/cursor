@@ -220,4 +220,60 @@ describe('App', () => {
       expect(within(column).getByLabelText('カードの内容')).toHaveValue('失敗するカード')
     })
   })
+
+  describe('adding a list', () => {
+    function stubCreateList(ok = true) {
+      const fetchMock = vi.fn(async (input: string, init?: RequestInit) => {
+        const url = new URL(input, 'http://localhost')
+        if (init?.method === 'POST')
+          return ok
+            ? jsonResponse({ id: 'l-new', boardId: BOARD_ID, name: 'レビュー', order: 3 })
+            : jsonResponse({}, false)
+        if (url.pathname === '/api/boards')
+          return jsonResponse([{ id: BOARD_ID, name: board.name }])
+        if (url.pathname === `/api/boards/${BOARD_ID}`) return jsonResponse(board)
+        return jsonResponse([])
+      })
+      vi.stubGlobal('fetch', fetchMock)
+      return fetchMock
+    }
+
+    it('posts the name to the board and clears the form', async () => {
+      const fetchMock = stubCreateList()
+      renderApp()
+      const input = await screen.findByLabelText('リスト名')
+
+      await userEvent.type(input, ' レビュー ')
+      await userEvent.click(screen.getByRole('button', { name: 'リスト追加' }))
+
+      await waitFor(() =>
+        expect(fetchMock).toHaveBeenCalledWith(
+          `/api/boards/${BOARD_ID}/lists`,
+          expect.objectContaining({ method: 'POST', body: JSON.stringify({ name: 'レビュー' }) }),
+        ),
+      )
+      await waitFor(() => expect(input).toHaveValue(''))
+    })
+
+    it('does not submit a blank name', async () => {
+      stubCreateList()
+      renderApp()
+
+      await userEvent.type(await screen.findByLabelText('リスト名'), '   ')
+
+      expect(screen.getByRole('button', { name: 'リスト追加' })).toBeDisabled()
+    })
+
+    it('shows an error and keeps the input when the API fails', async () => {
+      stubCreateList(false)
+      renderApp()
+      const input = await screen.findByLabelText('リスト名')
+
+      await userEvent.type(input, '失敗')
+      await userEvent.click(screen.getByRole('button', { name: 'リスト追加' }))
+
+      expect(await screen.findByRole('alert')).toHaveTextContent('リストを追加できませんでした')
+      expect(input).toHaveValue('失敗')
+    })
+  })
 })
