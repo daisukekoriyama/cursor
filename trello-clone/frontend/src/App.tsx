@@ -9,6 +9,7 @@ import {
 } from './api/queries'
 import styles from './App.module.css'
 import { Board } from './components/Board'
+import { BoardSelect } from './components/BoardSelect'
 import { SearchBar } from './components/SearchBar'
 import { useDebouncedValue } from './hooks/useDebouncedValue'
 
@@ -19,7 +20,8 @@ function App() {
   const debouncedFilters = useDebouncedValue(filters, SEARCH_DEBOUNCE_MS)
 
   const boards = useBoards()
-  const boardId = boards.data?.[0]?.id
+  const [selectedBoardId, setSelectedBoardId] = useState<string>()
+  const boardId = selectedBoardId ?? boards.data?.[0]?.id
   const board = useBoard(boardId)
   const search = useSearchCards(boardId, debouncedFilters)
 
@@ -39,7 +41,9 @@ function App() {
     <div className={styles.app}>
       <header className={styles.header}>
         <h1 className={styles.title}>タスクボード</h1>
-        {board.data && <p className={styles.boardName}>{board.data.name}</p>}
+        {boards.data && (
+          <BoardSelect boards={boards.data} selectedId={boardId} onChange={setSelectedBoardId} />
+        )}
       </header>
       <SearchBar filters={filters} onChange={setFilters} />
       {error ? (

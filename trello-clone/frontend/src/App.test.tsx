@@ -34,6 +34,13 @@ const board: BoardDetail = {
   cards,
 }
 
+const OTHER_BOARD: BoardDetail = {
+  id: 'board-2',
+  name: '別のボード',
+  lists: [{ id: 'x1', boardId: 'board-2', name: '準備中', order: 0 }],
+  cards: [card('x-c1', 'x1', '別ボードのカード')],
+}
+
 function jsonResponse(body: unknown, ok = true) {
   return { ok, status: ok ? 200 : 500, json: async () => body }
 }
@@ -41,7 +48,12 @@ function jsonResponse(body: unknown, ok = true) {
 function stubApi(searchResult: (url: URL) => unknown = () => []) {
   const fetchMock = vi.fn(async (input: string) => {
     const url = new URL(input, 'http://localhost')
-    if (url.pathname === '/api/boards') return jsonResponse([{ id: BOARD_ID, name: board.name }])
+    if (url.pathname === '/api/boards')
+      return jsonResponse([
+        { id: BOARD_ID, name: board.name },
+        { id: OTHER_BOARD.id, name: OTHER_BOARD.name },
+      ])
+    if (url.pathname === `/api/boards/${OTHER_BOARD.id}`) return jsonResponse(OTHER_BOARD)
     if (url.pathname === `/api/boards/${BOARD_ID}`) return jsonResponse(board)
     if (url.pathname === '/api/cards') return jsonResponse(searchResult(url))
     return jsonResponse({}, false)
@@ -72,6 +84,18 @@ describe('App', () => {
     expect(within(todo).getByText('サブタスク 1/2')).toBeInTheDocument()
     const done = screen.getByRole('region', { name: '完了' })
     expect(within(done).getByText('終了日 9/28')).toBeInTheDocument()
+  })
+
+  it('switches to the board chosen in the selector', async () => {
+    stubApi()
+    renderApp()
+    await screen.findByRole('region', { name: '未着手' })
+
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'ボード' }), '別のボード')
+
+    const list = await screen.findByRole('region', { name: '準備中' })
+    expect(within(list).getByText('別ボードのカード')).toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: '未着手' })).not.toBeInTheDocument()
   })
 
   it('shows only the searched cards in their own list columns', async () => {
