@@ -72,3 +72,11 @@ export function useCreateList(boardId: string) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['boards', boardId] }),
   })
 }
+
+export function useCreateBoard() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (name: string) => apiPost<BoardSummary>('/boards', { name }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['boards'] }),
+  })
+}

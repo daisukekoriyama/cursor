@@ -1,0 +1,16 @@
+.form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.name {
+  min-width: 0;
+}
+
+.error {
+  color: #ffd5d2;
+  font-size: 12px;
+}
