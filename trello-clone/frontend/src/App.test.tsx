@@ -889,4 +889,69 @@ describe('App', () => {
       )
     })
   })
+
+  describe("today's date and calendar", () => {
+    afterEach(() => vi.useRealTimers())
+
+    // Date だけを固定する(setTimeout などは本物のままにして、非同期の描画を妨げない)
+    function fixToday() {
+      vi.useFakeTimers({ toFake: ['Date'] })
+      vi.setSystemTime(new Date(2026, 8, 28, 12, 0))
+    }
+
+    it("shows today's date with the weekday in the header", async () => {
+      fixToday()
+      stubApi()
+      renderApp()
+
+      expect(await screen.findByText('今日: 2026年9月28日(月)')).toBeInTheDocument()
+    })
+
+    it('shows this month and the next two, highlighting today', async () => {
+      fixToday()
+      stubApi()
+      renderApp()
+
+      const calendar = await screen.findByRole('region', { name: '直近3ヶ月のカレンダー' })
+
+      for (const title of ['2026年9月', '2026年10月', '2026年11月'])
+        expect(within(calendar).getByText(title)).toBeInTheDocument()
+      const today = calendar.querySelector('[aria-current="date"]')
+      expect(today).toHaveTextContent('28')
+      expect(calendar.querySelectorAll('[aria-current="date"]')).toHaveLength(1)
+    })
+
+    it('marks due dates with the card names, and leaves out cards in the done list', async () => {
+      fixToday()
+      board.cards = [
+        ...cards,
+        card('c5', 'l1', '同じ日のカード', { due: '2026-10-05' }),
+        card('c6', 'l3', '完了済みで期限あり', { due: '2026-10-07' }),
+      ]
+      stubApi()
+      renderApp()
+
+      const calendar = await screen.findByRole('region', { name: '直近3ヶ月のカレンダー' })
+      const marked = [...calendar.querySelectorAll('[title]')]
+
+      expect(marked.map((el) => el.getAttribute('title'))).toEqual([
+        '期限: 要件定義書を読む、同じ日のカード',
+      ])
+      expect(marked[0]).toHaveTextContent('5')
+      board.cards = cards
+    })
+
+    it('is not affected by the card search', async () => {
+      fixToday()
+      stubApi(() => [])
+      renderApp()
+      const calendar = await screen.findByRole('region', { name: '直近3ヶ月のカレンダー' })
+      expect(calendar.querySelectorAll('[title]')).toHaveLength(1)
+
+      await userEvent.type(screen.getByRole('searchbox', { name: 'キーワード' }), 'zzz')
+      await screen.findByText('該当するカードはありません。')
+
+      expect(calendar.querySelectorAll('[title]')).toHaveLength(1)
+    })
+  })
 })

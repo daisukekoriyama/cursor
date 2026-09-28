@@ -9,14 +9,18 @@ import {
 } from './api/queries'
 import styles from './App.module.css'
 import { Board } from './components/Board'
+import { Calendar } from './components/Calendar'
 import { AddBoardForm } from './components/AddBoardForm'
 import { BoardSelect } from './components/BoardSelect'
 import { SearchBar } from './components/SearchBar'
+import { TodayDate } from './components/TodayDate'
 import { useDebouncedValue } from './hooks/useDebouncedValue'
 
 const SEARCH_DEBOUNCE_MS = 300
 
 function App() {
+  // ページを開いた日。日付をまたいだあとは再読み込みで新しくなる
+  const [today] = useState(() => new Date())
   const [filters, setFilters] = useState<SearchFilters>(NO_FILTERS)
   const debouncedFilters = useDebouncedValue(filters, SEARCH_DEBOUNCE_MS)
 
@@ -41,6 +45,7 @@ function App() {
   return (
     <div className={styles.app}>
       <header className={styles.header}>
+        <TodayDate today={today} />
         <h1 className={styles.title}>タスクボード</h1>
         <div className={styles.boardBar}>
           {boards.data && (
@@ -65,6 +70,7 @@ function App() {
             <p className={styles.message}>該当するカードはありません。</p>
           )}
           <Board boardId={board.data.id} lists={board.data.lists} cards={cards} />
+          <Calendar today={today} lists={board.data.lists} cards={board.data.cards} />
         </>
       ) : (
         <p className={styles.message}>ボードがありません。</p>
