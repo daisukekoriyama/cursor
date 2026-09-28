@@ -1,14 +1,16 @@
 import type { CardResponse, ListResponse } from '../api/types'
 import styles from './Board.module.css'
+import { AddListForm } from './AddListForm'
 import { ListColumn } from './ListColumn'
 
 interface Props {
+  boardId: string
   lists: ListResponse[]
   cards: CardResponse[]
 }
 
 // 列は常に全リストを出し、カードだけを listId で振り分ける(検索結果は列の中で絞り込まれる)
-export function Board({ lists, cards }: Props) {
+export function Board({ boardId, lists, cards }: Props) {
   const orderedLists = [...lists].sort((a, b) => a.order - b.order)
 
   return (
@@ -16,6 +18,7 @@ export function Board({ lists, cards }: Props) {
       {orderedLists.map((list) => (
         <ListColumn key={list.id} list={list} cards={cards.filter((c) => c.listId === list.id)} />
       ))}
+      <AddListForm boardId={boardId} />
     </div>
   )
 }

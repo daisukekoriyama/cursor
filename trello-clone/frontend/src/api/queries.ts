@@ -1,6 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiGet, apiPost } from './client'
-import type { BoardDetail, BoardSummary, CardResponse } from './types'
+import type { BoardDetail, BoardSummary, CardResponse, ListResponse } from './types'
 
 export type CompletedFilter = 'all' | 'completed' | 'incomplete'
 
@@ -62,5 +62,13 @@ export function useCreateCard() {
         queryClient.invalidateQueries({ queryKey: ['boards'] }),
         queryClient.invalidateQueries({ queryKey: ['cards'] }),
       ]),
+  })
+}
+
+export function useCreateList(boardId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (name: string) => apiPost<ListResponse>(`/boards/${boardId}/lists`, { name }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['boards', boardId] }),
   })
 }

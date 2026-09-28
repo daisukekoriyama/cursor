@@ -60,7 +60,7 @@ function App() {
           {searching && search.data?.length === 0 && (
             <p className={styles.message}>該当するカードはありません。</p>
           )}
-          <Board lists={board.data.lists} cards={cards} />
+          <Board boardId={board.data.id} lists={board.data.lists} cards={cards} />
         </>
       ) : (
         <p className={styles.message}>ボードがありません。</p>

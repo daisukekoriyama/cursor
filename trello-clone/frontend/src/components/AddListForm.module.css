@@ -1,0 +1,21 @@
+.form {
+  display: flex;
+  flex: 0 0 272px;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 8px;
+  background: rgb(235 236 240 / 60%);
+  border-radius: 8px;
+}
+
+.form input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.error {
+  flex: 1 1 100%;
+  margin: 0;
+  color: #c9372c;
+  font-size: 12px;
+}
