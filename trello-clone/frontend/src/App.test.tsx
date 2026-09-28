@@ -27,9 +27,9 @@ const board: BoardDetail = {
   id: BOARD_ID,
   name: 'サンプルボード',
   lists: [
-    { id: 'l1', boardId: BOARD_ID, name: '未着手', order: 0 },
-    { id: 'l2', boardId: BOARD_ID, name: '進行中', order: 1 },
-    { id: 'l3', boardId: BOARD_ID, name: '完了', order: 2 },
+    { id: 'l1', boardId: BOARD_ID, name: '未着手', order: 0, done: false },
+    { id: 'l2', boardId: BOARD_ID, name: '進行中', order: 1, done: false },
+    { id: 'l3', boardId: BOARD_ID, name: '完了', order: 2, done: true },
   ],
   cards,
 }
@@ -37,7 +37,7 @@ const board: BoardDetail = {
 const OTHER_BOARD: BoardDetail = {
   id: 'board-2',
   name: '別のボード',
-  lists: [{ id: 'x1', boardId: 'board-2', name: '準備中', order: 0 }],
+  lists: [{ id: 'x1', boardId: 'board-2', name: '準備中', order: 0, done: false }],
   cards: [card('x-c1', 'x1', '別ボードのカード')],
 }
 
@@ -636,6 +636,93 @@ describe('App', () => {
 
       expect(await within(column).findByRole('alert')).toHaveTextContent(
         'リスト名を保存できませんでした',
+      )
+    })
+  })
+
+  describe('completion', () => {
+    function stubBoard(boardData: BoardDetail, failWrites = false) {
+      const fetchMock = vi.fn(async (input: string, init?: RequestInit) => {
+        const url = new URL(input, 'http://localhost')
+        if (init?.method && init.method !== 'GET')
+          return failWrites ? jsonResponse({}, false) : jsonResponse({})
+        if (url.pathname === '/api/boards')
+          return jsonResponse([{ id: boardData.id, name: boardData.name }])
+        if (url.pathname === `/api/boards/${boardData.id}`) return jsonResponse(boardData)
+        return jsonResponse([])
+      })
+      vi.stubGlobal('fetch', fetchMock)
+      return fetchMock
+    }
+
+    it('moves a card to the done list when its checkbox is checked', async () => {
+      const fetchMock = stubBoard(board)
+      renderApp()
+      const todo = await screen.findByRole('region', { name: '未着手' })
+
+      await userEvent.click(
+        within(todo).getByRole('checkbox', { name: '要件定義書を読む を完了にする' }),
+      )
+
+      await waitFor(() =>
+        expect(fetchMock).toHaveBeenCalledWith(
+          '/api/cards/c1',
+          expect.objectContaining({ method: 'PATCH', body: JSON.stringify({ listId: 'l3' }) }),
+        ),
+      )
+    })
+
+    it('has no completion checkbox in the done list, and shows the end date instead of the due date', async () => {
+      const dueAndDone = card('c4', 'l3', '期限つきで完了', {
+        due: '2026-10-01',
+        completedAt: '2026-09-28',
+      })
+      stubBoard({ ...board, cards: [...cards, dueAndDone] })
+      renderApp()
+      const done = await screen.findByRole('region', { name: '完了' })
+
+      expect(within(done).queryByRole('checkbox')).not.toBeInTheDocument()
+      expect(within(done).getAllByText('終了日 9/28')).toHaveLength(2)
+      expect(within(done).queryByText('期限 10/1')).not.toBeInTheDocument()
+    })
+
+    it('has no completion checkbox when the board has no done list', async () => {
+      stubBoard(OTHER_BOARD)
+      renderApp()
+      await screen.findByRole('region', { name: '準備中' })
+
+      expect(screen.queryByRole('checkbox')).not.toBeInTheDocument()
+    })
+
+    it('shows an error when completing fails', async () => {
+      stubBoard(board, true)
+      renderApp()
+      const todo = await screen.findByRole('region', { name: '未着手' })
+
+      await userEvent.click(
+        within(todo).getByRole('checkbox', { name: '要件定義書を読む を完了にする' }),
+      )
+
+      expect(await within(todo).findByRole('alert')).toHaveTextContent(
+        'カードを完了にできませんでした',
+      )
+    })
+
+    it('toggles the done-list flag from the list settings', async () => {
+      const fetchMock = stubBoard(board)
+      renderApp()
+      const column = await screen.findByRole('region', { name: '進行中' })
+      await userEvent.click(within(column).getByRole('button', { name: '進行中 の編集' }))
+
+      const checkbox = within(column).getByRole('checkbox', { name: '完了リストにする' })
+      expect(checkbox).not.toBeChecked()
+      await userEvent.click(checkbox)
+
+      await waitFor(() =>
+        expect(fetchMock).toHaveBeenCalledWith(
+          '/api/lists/l2',
+          expect.objectContaining({ method: 'PATCH', body: JSON.stringify({ done: true }) }),
+        ),
       )
     })
   })

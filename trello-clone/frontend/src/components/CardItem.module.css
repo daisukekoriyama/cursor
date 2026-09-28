@@ -40,3 +40,19 @@
   margin-top: 4px;
   font-size: 12px;
 }
+
+.titleRow {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+.titleRow input {
+  margin-top: 2px;
+}
+
+.error {
+  margin: 4px 0 0;
+  color: #c9372c;
+  font-size: 12px;
+}
