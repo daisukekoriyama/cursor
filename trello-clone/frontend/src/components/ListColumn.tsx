@@ -1,4 +1,5 @@
 import type { CardResponse, ListResponse } from '../api/types'
+import { AddCardForm } from './AddCardForm'
 import { CardItem } from './CardItem'
 import styles from './ListColumn.module.css'
 
@@ -18,6 +19,7 @@ export function ListColumn({ list, cards }: Props) {
           <CardItem key={card.id} card={card} />
         ))}
       </ul>
+      <AddCardForm listId={list.id} />
     </section>
   )
 }
