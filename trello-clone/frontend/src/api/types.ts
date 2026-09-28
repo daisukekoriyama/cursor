@@ -36,4 +36,6 @@ export interface BoardDetail {
   name: string
   lists: ListResponse[]
   cards: CardResponse[]
+  // リスト・カード・小項目を最後に変更した日時(ISO 8601)。まだ変更がなければ null
+  updatedAt: string | null
 }

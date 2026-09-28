@@ -12,6 +12,7 @@ import { Board } from './components/Board'
 import { Calendar } from './components/Calendar'
 import { AddBoardForm } from './components/AddBoardForm'
 import { BoardSelect } from './components/BoardSelect'
+import { LastUpdated } from './components/LastUpdated'
 import { SearchBar } from './components/SearchBar'
 import { TodayDate } from './components/TodayDate'
 import { useDebouncedValue } from './hooks/useDebouncedValue'
@@ -71,6 +72,7 @@ function App() {
           )}
           <Board boardId={board.data.id} lists={board.data.lists} cards={cards} />
           <Calendar today={today} lists={board.data.lists} cards={board.data.cards} />
+          <LastUpdated updatedAt={board.data.updatedAt} />
         </>
       ) : (
         <p className={styles.message}>ボードがありません。</p>
