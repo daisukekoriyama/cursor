@@ -38,3 +38,9 @@
 2. Issue がある(なければ作る)
 3. `<種別>/<番号>-<要約>` のブランチを切る
 4. 実装 → コミット → push → PR 作成 → マージ(`--delete-branch`)→ `git checkout main && git pull --ff-only`
+
+## 7. 開発サーバーのポート(固定)
+- バックエンドは **8080**、フロントは **5173** で起動する。他のポートでは動かない(バックエンドのCORS許可とViteのプロキシ先がこの2つに固定されているため)。一時的にでも別ポートで起動しない。
+- 起動は必ず `./scripts/start-backend.sh` / `./scripts/start-frontend.sh` を使う。`./mvnw spring-boot:run`、`npm run dev`、`vite` を直接実行しない。
+- ポートが競合したら、使用中のプロセスを停止して既定ポートで起動する(スクリプトが自動で行う。ポートだけ空けるなら `./scripts/free-port.sh <8080|5173>`)。Docker が握っている等で解放できない場合は、別ポートに逃げず、原因を報告する。
+- この制限は `.claude/hooks/guard-dev-server.py`(PreToolUse フック)が強制する。手順の詳細はスキル `start-servers`(`.claude/skills/start-servers/SKILL.md`)を参照。

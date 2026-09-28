@@ -24,10 +24,11 @@ CREATE DATABASE taskboard_test OWNER taskboard ENCODING 'UTF8' TEMPLATE template
 ## 起動
 
 ```
-./mvnw spring-boot:run
+../../scripts/start-backend.sh
 ```
 
-`http://localhost:8080` で起動する。
+`http://localhost:8080` で起動する。ポートは 8080 固定(フロントのプロキシ先が 8080 のため)。
+使用中のときは、そのプロセスを停止してから起動する。
 
 | 用途 | URL |
 |---|---|

@@ -12,10 +12,11 @@
 
 ```
 npm install
-npm run dev
+../../scripts/start-frontend.sh
 ```
 
-`http://localhost:5173` で開く。
+`http://localhost:5173` で開く。ポートは 5173 固定(バックエンドのCORS許可が 5173 のため)。
+使用中のときは、そのプロセスを停止してから起動する。`npm run dev` を直接使うと、使用中なら起動に失敗する(別ポートへは逃げない)。
 
 ## バックエンドとの接続
 
@@ -26,7 +27,7 @@ npm run dev
 
 | コマンド | 内容 |
 |---|---|
-| `npm run dev` | 開発サーバー |
+| `npm run dev` | 開発サーバー(通常は `scripts/start-frontend.sh` を使う) |
 | `npm test` | テスト(Vitest) |
 | `npm run lint` | 静的解析(oxlint。Vite の雛形の標準) |
 | `npm run format` | Prettier で整形 |
