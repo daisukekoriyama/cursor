@@ -1,8 +1,135 @@
-import { render, screen } from '@testing-library/react'
-import { expect, it } from 'vitest'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { render, screen, waitFor, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import type { BoardDetail, CardResponse } from './api/types'
 import App from './App'
 
-it('renders the app title', () => {
-  render(<App />)
-  expect(screen.getByRole('heading', { name: 'タスクボード' })).toBeInTheDocument()
+const BOARD_ID = 'board-1'
+
+function card(id: string, listId: string, text: string, extra: Partial<CardResponse> = {}) {
+  return { id, listId, order: 0, text, due: null, completedAt: null, subtasks: [], ...extra }
+}
+
+const cards: CardResponse[] = [
+  card('c1', 'l1', '要件定義書を読む', {
+    due: '2026-10-05',
+    subtasks: [
+      { id: 's1', cardId: 'c1', text: '10章を読む', done: true },
+      { id: 's2', cardId: 'c1', text: '11章を読む', done: false },
+    ],
+  }),
+  card('c2', 'l2', 'カード検索APIを実装する'),
+  card('c3', 'l3', '運用ルールを決める', { completedAt: '2026-09-28' }),
+]
+
+const board: BoardDetail = {
+  id: BOARD_ID,
+  name: 'サンプルボード',
+  lists: [
+    { id: 'l1', boardId: BOARD_ID, name: '未着手', order: 0 },
+    { id: 'l2', boardId: BOARD_ID, name: '進行中', order: 1 },
+    { id: 'l3', boardId: BOARD_ID, name: '完了', order: 2 },
+  ],
+  cards,
+}
+
+function jsonResponse(body: unknown, ok = true) {
+  return { ok, status: ok ? 200 : 500, json: async () => body }
+}
+
+function stubApi(searchResult: (url: URL) => unknown = () => []) {
+  const fetchMock = vi.fn(async (input: string) => {
+    const url = new URL(input, 'http://localhost')
+    if (url.pathname === '/api/boards') return jsonResponse([{ id: BOARD_ID, name: board.name }])
+    if (url.pathname === `/api/boards/${BOARD_ID}`) return jsonResponse(board)
+    if (url.pathname === '/api/cards') return jsonResponse(searchResult(url))
+    return jsonResponse({}, false)
+  })
+  vi.stubGlobal('fetch', fetchMock)
+  return fetchMock
+}
+
+function renderApp() {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  render(
+    <QueryClientProvider client={queryClient}>
+      <App />
+    </QueryClientProvider>,
+  )
+}
+
+afterEach(() => vi.unstubAllGlobals())
+
+describe('App', () => {
+  it('shows every list with its cards and badges', async () => {
+    stubApi()
+    renderApp()
+
+    const todo = await screen.findByRole('region', { name: '未着手' })
+    expect(within(todo).getByText('要件定義書を読む')).toBeInTheDocument()
+    expect(within(todo).getByText('期限 10/5')).toBeInTheDocument()
+    expect(within(todo).getByText('サブタスク 1/2')).toBeInTheDocument()
+    const done = screen.getByRole('region', { name: '完了' })
+    expect(within(done).getByText('終了日 9/28')).toBeInTheDocument()
+  })
+
+  it('shows only the searched cards in their own list columns', async () => {
+    const fetchMock = stubApi(() => [cards[1]])
+    renderApp()
+    await screen.findByRole('region', { name: '未着手' })
+
+    await userEvent.type(screen.getByRole('searchbox', { name: 'キーワード' }), 'api')
+
+    await waitFor(() => expect(screen.queryByText('要件定義書を読む')).not.toBeInTheDocument())
+    expect(
+      within(screen.getByRole('region', { name: '進行中' })).getByText('カード検索APIを実装する'),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: '未着手' })).toBeInTheDocument()
+    expect(fetchMock).toHaveBeenCalledWith(`/api/cards?boardId=${BOARD_ID}&keyword=api`)
+  })
+
+  it('sends the completed filter', async () => {
+    const fetchMock = stubApi(() => [cards[2]])
+    renderApp()
+    await screen.findByRole('region', { name: '未着手' })
+
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: '完了状態' }), 'completed')
+
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(`/api/cards?boardId=${BOARD_ID}&completed=true`),
+    )
+  })
+
+  it('tells the user when nothing matches', async () => {
+    stubApi(() => [])
+    renderApp()
+    await screen.findByRole('region', { name: '未着手' })
+
+    await userEvent.type(screen.getByRole('searchbox', { name: 'キーワード' }), 'zzz')
+
+    expect(await screen.findByText('該当するカードはありません。')).toBeInTheDocument()
+  })
+
+  it('shows an error with a retry button when the API fails', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => jsonResponse({}, false)),
+    )
+    renderApp()
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('データを取得できませんでした')
+    expect(screen.getByRole('button', { name: '再試行' })).toBeInTheDocument()
+  })
+
+  it('renders card text as plain text, not HTML', async () => {
+    const xss = card('c9', 'l1', '<img src=x onerror=alert(1)>')
+    board.cards = [xss]
+    stubApi()
+    renderApp()
+
+    expect(await screen.findByText('<img src=x onerror=alert(1)>')).toBeInTheDocument()
+    expect(document.querySelector('img')).toBeNull()
+    board.cards = cards
+  })
 })
