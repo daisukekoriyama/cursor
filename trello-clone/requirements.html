@@ -513,7 +513,7 @@
       </div>
       <div>
         <dt>バージョン</dt>
-        <dd>v0.13</dd>
+        <dd>v0.14</dd>
       </div>
       <div>
         <dt>作成日</dt>
@@ -1253,9 +1253,11 @@ subtasks
       <section class="doc-section" id="constraints">
         <h2><span class="num">12.</span>制約・前提</h2>
         <ul class="nfr-list" style="grid-template-columns: 1fr;">
-          <li style="grid-template-columns: 1fr;">バックエンド・データベースを持たないため、ブラウザのデータを消去するとタスクも失われる</li>
-          <li style="grid-template-columns: 1fr;">認証機能がないため、同じ端末・ブラウザを使う人であれば誰でも閲覧・編集できる</li>
-          <li style="grid-template-columns: 1fr;">別のブラウザ・別の端末からは同じデータを参照できない</li>
+          <li style="grid-template-columns: 1fr;">現行のプロトタイプ(<span class="mono">index.html</span>)はバックエンド・データベースを持たず、データをブラウザのlocalStorageに保存するため、ブラウザのデータを消去するとタスクも失われる。別のブラウザ・別の端末からは同じデータを参照できない</li>
+          <li style="grid-template-columns: 1fr;">React + Spring Boot + PostgreSQL版(REQ-14)は、データをPostgreSQLに保存する。利用にはPostgreSQL(Dockerのコンテナ)とバックエンドが稼働していることが前提で、どちらかが停止していると画面にデータが表示されない</li>
+          <li style="grid-template-columns: 1fr;">React版のフロントエンドは、現時点ではカード検索の結果をボードとして表示する「表示専用」である。カードの追加・編集・移動・削除、カレンダー等は、プロトタイプ側にのみ実装されている</li>
+          <li style="grid-template-columns: 1fr;">認証機能がないため、同じ端末・ブラウザを使う人であれば誰でも閲覧・編集できる。React + Spring Boot版はAPIも認証なしのため、インターネットへ公開せず、手元の環境でのみ運用する</li>
+          <li style="grid-template-columns: 1fr;">開発用のサーバーは、バックエンドを8080番、フロントエンドを5173番のポートに固定する(バックエンドのCORS許可とフロントエンドのプロキシ先がこの2つの前提のため)。これらのポートを他のアプリが使用している場合は、そのプロセスを停止してから起動する</li>
         </ul>
       </section>
 
@@ -1488,6 +1490,11 @@ subtasks
                 <td class="mono">2026-09-28</td>
                 <td>DBの実行環境を実際の構成に合わせて更新(Postgres.appの直接インストールから、DockerのPostgreSQL 17コンテナへ)。11章の「DBのローカル実行」「環境準備」「テスト」の記述とRISK-06の対応策を更新し、バージョンと手順はリポジトリ直下のREADMEにまとめた旨を追記</td>
               </tr>
+              <tr>
+                <td class="mono">v0.14</td>
+                <td class="mono">2026-09-28</td>
+                <td>12章(制約・前提)を、旧プロトタイプ前提の記述から、React + Spring Boot + PostgreSQL版を含む現状に更新。データの保存先の違い、稼働の前提、フロントが表示専用であること、認証なし・非公開運用、開発サーバーの固定ポートを整理</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -1496,7 +1503,7 @@ subtasks
     </main>
   </div>
 
-  <footer class="doc-footer">TB-REQ-001 &middot; v0.13 &middot; 2026-09-28</footer>
+  <footer class="doc-footer">TB-REQ-001 &middot; v0.14 &middot; 2026-09-28</footer>
 
 </div>
 
