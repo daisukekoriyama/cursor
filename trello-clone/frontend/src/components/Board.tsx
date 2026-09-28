@@ -16,7 +16,12 @@ export function Board({ boardId, lists, cards }: Props) {
   return (
     <div className={styles.board}>
       {orderedLists.map((list) => (
-        <ListColumn key={list.id} list={list} cards={cards.filter((c) => c.listId === list.id)} />
+        <ListColumn
+          key={list.id}
+          list={list}
+          lists={orderedLists}
+          cards={cards.filter((c) => c.listId === list.id)}
+        />
       ))}
       <AddListForm boardId={boardId} />
     </div>

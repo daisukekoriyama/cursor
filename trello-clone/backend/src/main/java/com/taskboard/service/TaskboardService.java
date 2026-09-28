@@ -156,6 +156,10 @@ public class TaskboardService {
             if (!lists.existsById(request.listId())) {
                 throw new BadRequestException("listId not found");
             }
+            // order を省略して別のリストへ移すときは、移動先の末尾に置く
+            if (request.order() == null && !request.listId().equals(card.getListId())) {
+                card.setSortOrder(cards.findMaxSortOrder(request.listId()).map(max -> max + 1).orElse(0));
+            }
             card.setListId(request.listId());
         }
         if (request.order() != null) {

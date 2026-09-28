@@ -3,20 +3,22 @@ import {
   useCreateSubtask,
   useDeleteCard,
   useDeleteSubtask,
+  useMoveCard,
   useToggleSubtask,
   useUpdateCard,
 } from '../api/queries'
-import type { CardResponse, SubtaskResponse } from '../api/types'
+import type { CardResponse, ListResponse, SubtaskResponse } from '../api/types'
 import styles from './CardDetail.module.css'
 
 interface Props {
   card: CardResponse
 }
 
-export function CardDetail({ card }: Props) {
+export function CardDetail({ card, lists }: Props & { lists: ListResponse[] }) {
   return (
     <div className={styles.detail}>
       <EditCardForm card={card} />
+      <MoveCardSelect card={card} lists={lists} />
       <SubtaskList card={card} />
       <DeleteCardButton card={card} />
     </div>
@@ -62,6 +64,30 @@ function EditCardForm({ card }: Props) {
       </button>
       <ErrorMessage show={update.isError}>カードを保存できませんでした。</ErrorMessage>
     </form>
+  )
+}
+
+function MoveCardSelect({ card, lists }: Props & { lists: ListResponse[] }) {
+  const move = useMoveCard(card.id)
+
+  return (
+    <div className={styles.row}>
+      <label>
+        移動先{' '}
+        <select
+          value={card.listId}
+          disabled={move.isPending}
+          onChange={(e) => move.mutate(e.target.value)}
+        >
+          {lists.map((list) => (
+            <option key={list.id} value={list.id}>
+              {list.name}
+            </option>
+          ))}
+        </select>
+      </label>
+      <ErrorMessage show={move.isError}>カードを移動できませんでした。</ErrorMessage>
+    </div>
   )
 }
 
