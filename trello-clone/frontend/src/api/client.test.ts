@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ApiError, apiGet, apiPost } from './client'
+import { ApiError, apiDelete, apiGet, apiPatch, apiPost } from './client'
 
 function mockFetch(response: Partial<Response>) {
   const fetchMock = vi.fn().mockResolvedValue(response)
@@ -46,5 +46,39 @@ describe('apiPost', () => {
     mockFetch({ ok: false, status: 400 })
 
     await expect(apiPost('/lists/l1/cards', {})).rejects.toMatchObject({ status: 400 })
+  })
+})
+
+describe('apiPatch', () => {
+  it('sends a PATCH with the JSON body and returns the parsed response', async () => {
+    const fetchMock = mockFetch({ ok: true, json: async () => ({ id: 'c1' }) })
+
+    expect(await apiPatch('/cards/c1', { text: 'b' })).toEqual({ id: 'c1' })
+    expect(fetchMock).toHaveBeenCalledWith('/api/cards/c1', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{"text":"b"}',
+    })
+  })
+})
+
+describe('apiDelete', () => {
+  it('sends a DELETE without reading a body (204)', async () => {
+    const json = vi.fn()
+    const fetchMock = mockFetch({ ok: true, status: 204, json })
+
+    await apiDelete('/cards/c1')
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/cards/c1',
+      expect.objectContaining({ method: 'DELETE' }),
+    )
+    expect(json).not.toHaveBeenCalled()
+  })
+
+  it('throws ApiError with the status when the response is not ok', async () => {
+    mockFetch({ ok: false, status: 404 })
+
+    await expect(apiDelete('/cards/x')).rejects.toMatchObject({ status: 404 })
   })
 })

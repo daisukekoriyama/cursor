@@ -35,3 +35,8 @@
   background: #61bd4f;
   color: #fff;
 }
+
+.toggle {
+  margin-top: 4px;
+  font-size: 12px;
+}

@@ -1,0 +1,50 @@
+.detail {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #dfe1e6;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.grow {
+  flex: 1 1 100%;
+  min-width: 0;
+}
+
+.subtasks {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0 0 4px;
+  padding: 0;
+  list-style: none;
+}
+
+.subtask {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.done {
+  color: #6b778c;
+  text-decoration: line-through;
+}
+
+.error {
+  flex: 1 1 100%;
+  margin: 0;
+  color: #c9372c;
+  font-size: 12px;
+}

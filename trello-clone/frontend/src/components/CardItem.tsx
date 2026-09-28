@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import type { CardResponse } from '../api/types'
+import { CardDetail } from './CardDetail'
 import styles from './CardItem.module.css'
 
 interface Props {
@@ -12,6 +14,7 @@ function formatDate(date: string): string {
 }
 
 export function CardItem({ card }: Props) {
+  const [open, setOpen] = useState(false)
   const doneCount = card.subtasks.filter((subtask) => subtask.done).length
 
   return (
@@ -30,6 +33,16 @@ export function CardItem({ card }: Props) {
           </span>
         )}
       </div>
+      <button
+        type="button"
+        className={styles.toggle}
+        aria-expanded={open}
+        aria-label={`${card.text} の詳細`}
+        onClick={() => setOpen(!open)}
+      >
+        {open ? '閉じる' : '詳細'}
+      </button>
+      {open && <CardDetail card={card} />}
     </li>
   )
 }

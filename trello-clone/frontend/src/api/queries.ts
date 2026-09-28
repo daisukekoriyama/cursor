@@ -1,6 +1,12 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { apiGet, apiPost } from './client'
-import type { BoardDetail, BoardSummary, CardResponse, ListResponse } from './types'
+import { apiDelete, apiGet, apiPatch, apiPost } from './client'
+import type {
+  BoardDetail,
+  BoardSummary,
+  CardResponse,
+  ListResponse,
+  SubtaskResponse,
+} from './types'
 
 export type CompletedFilter = 'all' | 'completed' | 'incomplete'
 
@@ -51,17 +57,64 @@ export interface NewCard {
   due: string
 }
 
-// 作成後は、ボード全体と検索結果の両方を再取得して表示に反映する
-export function useCreateCard() {
+// 書き込み後は、ボード全体と検索結果の両方を再取得して表示に反映する
+function useRefreshCards() {
   const queryClient = useQueryClient()
+  return () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['boards'] }),
+      queryClient.invalidateQueries({ queryKey: ['cards'] }),
+    ])
+}
+
+export function useCreateCard() {
+  const refresh = useRefreshCards()
   return useMutation({
     mutationFn: ({ listId, text, due }: NewCard) =>
       apiPost<CardResponse>(`/lists/${listId}/cards`, { text, due: due || undefined }),
-    onSuccess: () =>
-      Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['boards'] }),
-        queryClient.invalidateQueries({ queryKey: ['cards'] }),
-      ]),
+    onSuccess: refresh,
+  })
+}
+
+// due は空文字を送ると期限が消える
+export function useUpdateCard(cardId: string) {
+  const refresh = useRefreshCards()
+  return useMutation({
+    mutationFn: (changes: { text: string; due: string }) =>
+      apiPatch<CardResponse>(`/cards/${cardId}`, changes),
+    onSuccess: refresh,
+  })
+}
+
+export function useDeleteCard(cardId: string) {
+  const refresh = useRefreshCards()
+  return useMutation({
+    mutationFn: () => apiDelete(`/cards/${cardId}`),
+    onSuccess: refresh,
+  })
+}
+
+export function useCreateSubtask(cardId: string) {
+  const refresh = useRefreshCards()
+  return useMutation({
+    mutationFn: (text: string) => apiPost<SubtaskResponse>(`/cards/${cardId}/subtasks`, { text }),
+    onSuccess: refresh,
+  })
+}
+
+export function useToggleSubtask(subtaskId: string) {
+  const refresh = useRefreshCards()
+  return useMutation({
+    mutationFn: (done: boolean) => apiPatch<SubtaskResponse>(`/subtasks/${subtaskId}`, { done }),
+    onSuccess: refresh,
+  })
+}
+
+export function useDeleteSubtask(subtaskId: string) {
+  const refresh = useRefreshCards()
+  return useMutation({
+    mutationFn: () => apiDelete(`/subtasks/${subtaskId}`),
+    onSuccess: refresh,
   })
 }
 
