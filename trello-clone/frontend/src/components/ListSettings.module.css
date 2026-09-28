@@ -1,0 +1,28 @@
+.settings {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+  margin-bottom: 8px;
+  padding: 8px;
+  background: #fff;
+  border-radius: 6px;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  width: 100%;
+}
+
+.name {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.error {
+  margin: 0;
+  color: #c9372c;
+  font-size: 12px;
+}

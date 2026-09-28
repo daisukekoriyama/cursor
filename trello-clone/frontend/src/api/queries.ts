@@ -118,6 +118,23 @@ export function useDeleteSubtask(subtaskId: string) {
   })
 }
 
+export function useRenameList(listId: string, boardId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (name: string) => apiPatch<ListResponse>(`/lists/${listId}`, { name }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['boards', boardId] }),
+  })
+}
+
+// リストを消すとカードも消えるので、検索結果のキャッシュも再取得する
+export function useDeleteList(listId: string) {
+  const refresh = useRefreshCards()
+  return useMutation({
+    mutationFn: () => apiDelete(`/lists/${listId}`),
+    onSuccess: refresh,
+  })
+}
+
 export function useCreateList(boardId: string) {
   const queryClient = useQueryClient()
   return useMutation({
