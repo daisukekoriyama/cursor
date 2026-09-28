@@ -513,7 +513,7 @@
       </div>
       <div>
         <dt>バージョン</dt>
-        <dd>v0.14</dd>
+        <dd>v0.15</dd>
       </div>
       <div>
         <dt>作成日</dt>
@@ -903,6 +903,13 @@
                 <td><span class="status status-done">実装済み</span></td>
                 <td>カード・リストの追加・編集・削除・移動のいずれかを行うと、下段の「最終更新」が操作した日時に更新され、再読み込みしても保持される。一度も更新していない場合は「まだ更新されていません」と表示される</td>
               </tr>
+              <tr>
+                <td class="req-id">REQ-18</td>
+                <td>カードをキーワードと完了状態で検索し、結果をボード上に表示する(React版)</td>
+                <td><span class="pill pill-should">Should</span></td>
+                <td><span class="status status-done">実装済み</span><span class="muted mono">(React版・表示のみ)</span></td>
+                <td>検索欄にキーワードを入力すると、入力の0.3秒後に、本文にそのキーワードを含む(大文字小文字を区別しない)カードだけが、所属するリストの列に表示される。列は絞り込み中もすべて表示する。完了状態(すべて/未完了/完了)でも絞り込め、キーワードとはAND条件になる。該当するカードが無いときは「該当するカードはありません。」と表示し、検索欄を空にして「すべて」に戻すと全カードが表示される</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -1032,23 +1039,45 @@
               </tr>
               <tr>
                 <td class="req-id">SCR-03</td>
-                <td>リスト編集モード<span class="muted mono">(予定)</span></td>
-                <td>REQ-05実装後、リストの追加・名称変更・削除を行う</td>
+                <td>リスト編集モード</td>
+                <td>リストの追加・名称変更・削除を行う(REQ-05。プロトタイプでは実装済み)</td>
               </tr>
               <tr>
                 <td class="req-id">SCR-04</td>
-                <td>ボード一覧/切り替え画面<span class="muted mono">(予定)</span></td>
-                <td>REQ-12実装後、複数ボードを作成・切り替える</td>
+                <td>ボード一覧/切り替え画面<span class="muted mono">(一部実装)</span></td>
+                <td>複数ボードを作成・切り替える(REQ-12)。ボードの作成は未実装。切り替えは、React版のヘッダーにあるセレクト(SCR-05)で暫定的に行える</td>
+              </tr>
+              <tr>
+                <td class="req-id">SCR-05</td>
+                <td>React版のボード画面(検索・表示専用)</td>
+                <td>ボード選択・検索欄・完了状態の切り替えと、リスト列のカード表示を持つ(REQ-18)。詳細は下の「React版の画面」を参照</td>
               </tr>
             </tbody>
           </table>
         </div>
         <div class="structure-tree">[SCR-01 ボード画面] &#8212;編集ボタン&#8594; [SCR-02 カード編集モード]
 [SCR-02 カード編集モード] &#8212;保存/キャンセル&#8594; [SCR-01 ボード画面]
-[SCR-01 ボード画面] &#8212;<span class="c">(予定)</span>リスト編集ボタン&#8594; [SCR-03 リスト編集モード]
+[SCR-01 ボード画面] &#8212;リスト編集ボタン&#8594; [SCR-03 リスト編集モード]
 [SCR-03 リスト編集モード] &#8212;保存/キャンセル&#8594; [SCR-01 ボード画面]
-[SCR-01 ボード画面] &#8212;<span class="c">(予定)</span>ボード切り替えメニュー&#8594; [SCR-04 ボード一覧画面]
+[SCR-01 ボード画面] &#8212;<span class="c">(一部実装)</span>ボード切り替えメニュー&#8594; [SCR-04 ボード一覧画面]
 [SCR-04 ボード一覧画面] &#8212;ボード選択&#8594; [SCR-01 ボード画面]</div>
+
+        <h3>React版の画面(<span class="mono">frontend/</span>)</h3>
+        <p>React版は、現時点では検索結果をボードとして表示する表示専用の画面である(カードの追加・編集・移動、カレンダー、最終更新は未移行)。上から順に、タイトル、ボード選択、検索欄、リスト列を持つ。</p>
+        <div class="structure-tree"><span class="c">header</span>
+&nbsp;&nbsp;h1 &quot;タスクボード&quot;
+&nbsp;&nbsp;select <span class="c">(ボード選択。初期は先頭のボード)</span>
+
+<span class="c">form[role=search]</span>
+&nbsp;&nbsp;input[type=search] <span class="c">(キーワード。入力の0.3秒後に検索)</span>
+&nbsp;&nbsp;select <span class="c">(完了状態: すべて / 未完了 / 完了)</span>
+
+<span class="c">div.board</span>
+&nbsp;&nbsp;section.list &times; N <span class="c">(リスト名・件数。絞り込み中もすべての列を表示)</span>
+&nbsp;&nbsp;&nbsp;&nbsp;li.card &times; N
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;card-text
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;badges <span class="c">(期限 / 終了日 / サブタスク進捗 例: 1/2)</span></div>
+        <p class="muted">読み込み中は「読み込み中…」、通信に失敗したときは再試行ボタン付きのエラー、検索に該当が無いときは「該当するカードはありません。」を表示する。カードの文字列はReactの標準のエスケープに任せ、HTMLとしては解釈しない。</p>
       </section>
 
       <section class="doc-section" id="datamodel">
@@ -1212,7 +1241,7 @@ subtasks
               <tr><th>項目</th><th>採用技術</th><th>選定理由</th></tr>
             </thead>
             <tbody>
-              <tr><td>言語</td><td class="mono">Java 21 (LTS)</td><td>指定。Spring Boot 3系が要求するJava 17以上を満たす長期サポート版</td></tr>
+              <tr><td>言語</td><td class="mono">Java 21 (LTS)</td><td>指定。Spring Boot 4系が要求するJava 17以上を満たす長期サポート版</td></tr>
               <tr><td>フレームワーク</td><td class="mono">Spring Boot 4.1.1</td><td>指定。実装時点(2026-09-22)のSpring Initializrで選べる最新の安定版が4系だったため、4系を採用した</td></tr>
               <tr><td>API</td><td class="mono">Spring Web</td><td>10章のRESTエンドポイントを実装する</td></tr>
               <tr><td>永続化</td><td class="mono">Spring Data JPA(Hibernate)</td><td>リポジトリ経由でCRUDを実装し、パラメータバインドでSQLインジェクションを防ぐ</td></tr>
@@ -1345,7 +1374,7 @@ subtasks
             <span class="step-num">04</span>
             <div>
               <p class="step-title">バックエンド・DB化(REQ-14)<span class="muted mono">(APIサーバーは実装済み)</span></p>
-              <p class="step-desc">10章のAPI・DBスキーマ設計をもとに、Java + Spring Boot + PostgreSQLでAPIサーバーを実装した(<span class="mono">backend/</span>。結合テスト6件を含む)。旧Node.js + Express + SQLite版は、比較用に <span class="mono">backend-node/</span> へ退避している。</p>
+              <p class="step-desc">10章のAPI・DBスキーマ設計をもとに、Java + Spring Boot + PostgreSQLでAPIサーバーを実装した(<span class="mono">backend/</span>。結合テスト8件を含む)。旧Node.js + Express + SQLite版は、比較用に <span class="mono">backend-node/</span> へ退避している。</p>
             </div>
           </li>
           <li>
@@ -1495,6 +1524,11 @@ subtasks
                 <td class="mono">2026-09-28</td>
                 <td>12章(制約・前提)を、旧プロトタイプ前提の記述から、React + Spring Boot + PostgreSQL版を含む現状に更新。データの保存先の違い、稼働の前提、フロントが表示専用であること、認証なし・非公開運用、開発サーバーの固定ポートを整理</td>
               </tr>
+              <tr>
+                <td class="mono">v0.15</td>
+                <td class="mono">2026-09-28</td>
+                <td>実装との突き合わせで見つかった食い違いを修正(結合テストの件数を6件から8件へ、Spring Bootの系列を3系から4系へ)。実装済みのカード検索を機能要件REQ-18として追加し、8章にReact版の画面とSCR-05を追記。実装済みのSCR-03と、一部実装のSCR-04の記述を現状に合わせた</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -1503,7 +1537,7 @@ subtasks
     </main>
   </div>
 
-  <footer class="doc-footer">TB-REQ-001 &middot; v0.14 &middot; 2026-09-28</footer>
+  <footer class="doc-footer">TB-REQ-001 &middot; v0.15 &middot; 2026-09-28</footer>
 
 </div>
 
