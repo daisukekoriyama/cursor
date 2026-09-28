@@ -726,4 +726,44 @@ describe('App', () => {
       )
     })
   })
+
+  describe('card order', () => {
+    it('lists each column by due date, with undated cards last', async () => {
+      board.cards = [
+        card('a', 'l1', '期限なし', { order: 0 }),
+        card('b', 'l1', '遅い', { order: 1, due: '2026-12-01' }),
+        card('c', 'l1', '早い', { order: 2, due: '2026-10-01' }),
+        card('d', 'l2', '別の列', { order: 0, due: '2026-09-01' }),
+      ]
+      stubApi()
+      renderApp()
+
+      const todo = await screen.findByRole('region', { name: '未着手' })
+      const texts = within(todo)
+        .getAllByRole('listitem')
+        .map((item) => item.querySelector('p')?.textContent)
+
+      expect(texts).toEqual(['早い', '遅い', '期限なし'])
+      board.cards = cards
+    })
+
+    it('also orders the searched cards by due date', async () => {
+      stubApi(() => [
+        card('x', 'l1', '期限なし', { order: 0 }),
+        card('y', 'l1', '期限あり', { order: 1, due: '2026-10-01' }),
+      ])
+      renderApp()
+      await screen.findByRole('region', { name: '未着手' })
+
+      await userEvent.type(screen.getByRole('searchbox', { name: 'キーワード' }), 'a')
+
+      await waitFor(() => {
+        const todo = screen.getByRole('region', { name: '未着手' })
+        const texts = within(todo)
+          .getAllByRole('listitem')
+          .map((item) => item.querySelector('p')?.textContent)
+        expect(texts).toEqual(['期限あり', '期限なし'])
+      })
+    })
+  })
 })
