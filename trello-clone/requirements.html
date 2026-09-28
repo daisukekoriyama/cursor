@@ -513,7 +513,7 @@
       </div>
       <div>
         <dt>バージョン</dt>
-        <dd>v0.15</dd>
+        <dd>v0.16</dd>
       </div>
       <div>
         <dt>作成日</dt>
@@ -569,7 +569,7 @@
           <div class="scope-card in">
             <h3>対応する</h3>
             <ul>
-              <li>3つの固定リスト(未着手/進行中/完了)でのタスク管理</li>
+              <li>リスト(初期は未着手/進行中/完了)でのタスク管理と、リストの追加・名称変更・削除</li>
               <li>カードの追加・削除・編集(テキスト・期限)</li>
               <li>ドラッグ&ドロップによるリスト間移動</li>
               <li>期限に基づく自動並び替え</li>
@@ -577,7 +577,7 @@
               <li>チェックで完了リストへ自動移動、終了日の記録</li>
               <li>ブラウザ内へのデータ保存(localStorage)</li>
               <li>今日の日付・3ヶ月カレンダー・最終更新日時の表示</li>
-              <li>サーバー(DB)へのデータ保存(認証なし・単一ユーザー想定)</li>
+              <li>サーバー(DB)へのデータ保存(認証なし・単一ユーザー想定)と、カードのキーワード・完了状態での検索(React版)</li>
             </ul>
           </div>
           <div class="scope-card out">
@@ -586,8 +586,7 @@
               <li>ユーザー登録・ログイン</li>
               <li>複数ユーザーでの共有・権限管理</li>
               <li>Next.js(SSR/SSG)などのフルスタックフレームワークの採用</li>
-              <li>複数ボードの作成</li>
-              <li>リストの追加・編集</li>
+              <li>複数ボードの画面からの作成(APIでは作成でき、React版ではセレクトによる切り替えのみ実装済み)</li>
               <li>同一リスト内でのカードの手動並び替え</li>
             </ul>
           </div>
@@ -599,11 +598,11 @@
         <dl class="glossary">
           <li>
             <dt>ボード</dt>
-            <dd>タスク管理画面全体を指す最上位の単位。今回は1つのボードのみ存在する。</dd>
+            <dd>タスク管理画面全体を指す最上位の単位。プロトタイプでは1つのボードのみ存在する。React + API版では複数のボードをDBに持てる(画面での切り替えのみ実装済み)。</dd>
           </li>
           <li>
             <dt>リスト</dt>
-            <dd>進捗ステータスごとの列。「未着手」「進行中」「完了」の3種で固定。</dd>
+            <dd>進捗ステータスごとの列。初期は「未着手」「進行中」「完了」の3つで、追加・名称変更・削除ができる(REQ-05)。</dd>
           </li>
           <li>
             <dt>カード</dt>
@@ -687,6 +686,11 @@
                 <td class="req-id">UC-11</td>
                 <td>利用者として、ボードを最後に更新した日時を確認したい。なぜなら、しばらく開いていなかったときに情報がどのくらい古いかを判断したいから</td>
                 <td class="req-id">REQ-17</td>
+              </tr>
+              <tr>
+                <td class="req-id">UC-12</td>
+                <td>利用者として、キーワードや完了状態でカードを絞り込みたい。なぜなら、カードが増えても目的のタスクをすぐに見つけたいから</td>
+                <td class="req-id">REQ-18</td>
               </tr>
             </tbody>
           </table>
@@ -923,7 +927,7 @@
         <ul class="nfr-list">
           <li>
             <span class="label">動作環境</span>
-            <span>現行プロトタイプ(v0.x)は、サーバー不要でindex.htmlをブラウザで開くだけで動作すること。React・Spring Boot構成への移行後(REQ-14)は、PostgreSQLとSpring Boot(APIサーバー)、Vite(フロントエンドの開発サーバー)を起動すれば動作すること</span>
+            <span>現行プロトタイプ(v0.x)は、サーバー不要でindex.htmlをブラウザで開くだけで動作すること。React・Spring Boot構成(REQ-14)は、PostgreSQL(Dockerのコンテナ)とSpring Boot(APIサーバー、8080番)、Vite(フロントエンドの開発サーバー、5173番)を起動すれば動作すること。サーバーは <span class="mono">scripts/start-backend.sh</span> と <span class="mono">scripts/start-frontend.sh</span> で、固定のポートで起動する</span>
           </li>
           <li>
             <span class="label">データ永続性の範囲</span>
@@ -1340,6 +1344,12 @@ subtasks
                 <td><span class="pill pill-should">中</span></td>
                 <td>ビルド済みバイナリ(Temurin JDK)を使って導入し、2026-09-22に完了した。DBは当初Postgres.appを使っていたが、Docker(28.1.1)が動作したため、現在はDockerのPostgreSQLコンテナで動かしている(2026-09-28時点で確認済み)。セットアップ手順はリポジトリ直下のREADMEに残す。今後、OSを更新する場合は導入済みの環境への影響を確認する</td>
               </tr>
+              <tr>
+                <td class="req-id">RISK-07</td>
+                <td>開発サーバーのポート(8080・5173)を他のアプリが使用していると起動に失敗する。別のポートで起動すると、バックエンドのCORS許可とフロントエンドのプロキシ先がずれて動作しない</td>
+                <td><span class="pill pill-should">中</span></td>
+                <td>ポートは8080・5173に固定し、起動スクリプトが使用中のプロセスを停止してから起動する。Claude Codeでは、フックで別ポートでの起動とスクリプトを介さない起動を拒否している(CLAUDE.mdとスキル <span class="mono">start-servers</span> に記載)。Dockerがポートを使用している場合は、停止せず原因を確認する</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -1529,6 +1539,11 @@ subtasks
                 <td class="mono">2026-09-28</td>
                 <td>実装との突き合わせで見つかった食い違いを修正(結合テストの件数を6件から8件へ、Spring Bootの系列を3系から4系へ)。実装済みのカード検索を機能要件REQ-18として追加し、8章にReact版の画面とSCR-05を追記。実装済みのSCR-03と、一部実装のSCR-04の記述を現状に合わせた</td>
               </tr>
+              <tr>
+                <td class="mono">v0.16</td>
+                <td class="mono">2026-09-28</td>
+                <td>実装済みの内容と矛盾していた記述を修正。2章(実装済みのリスト編集を「対応しない」から除外、カード検索を追加)、3章(用語「ボード」「リスト」)、4章(UC-12を追加)、7章(動作環境に起動スクリプトと固定ポートを反映)、13章(RISK-07 ポート競合を追加)</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -1537,7 +1552,7 @@ subtasks
     </main>
   </div>
 
-  <footer class="doc-footer">TB-REQ-001 &middot; v0.15 &middot; 2026-09-28</footer>
+  <footer class="doc-footer">TB-REQ-001 &middot; v0.16 &middot; 2026-09-28</footer>
 
 </div>
 
