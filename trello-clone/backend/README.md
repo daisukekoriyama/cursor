@@ -1,12 +1,12 @@
 # taskboard-backend
 
-タスクボードのバックエンドAPI。Java 21 + Spring Boot 4 + PostgreSQL 16。
+タスクボードのバックエンドAPI。Java 21 + Spring Boot 4.1.1 + PostgreSQL(16以降。動作確認は17.11)。
 設計は `../requirements.html` の10章(API・DB)と11章(技術スタック)を参照。
 
 ## 必要なもの
 
 - JDK 21(Maven単体は不要。同梱の `./mvnw` を使う)
-- PostgreSQL 16(ローカルで稼働していること)
+- PostgreSQL 16以降(ローカルで稼働していること。動作確認は Docker の `postgres:17` = 17.11。Dockerでの用意の仕方はルートの `README.md` を参照)
 
 ## データベースの準備(初回のみ)
 
