@@ -25,6 +25,9 @@ public class TaskList {
     @Column(name = "sort_order", nullable = false)
     private int sortOrder;
 
+    @Column(name = "is_done", nullable = false)
+    private boolean done;
+
     protected TaskList() {
     }
 
@@ -56,5 +59,13 @@ public class TaskList {
 
     public void setSortOrder(int sortOrder) {
         this.sortOrder = sortOrder;
+    }
+
+    public boolean isDone() {
+        return done;
+    }
+
+    public void setDone(boolean done) {
+        this.done = done;
     }
 }
