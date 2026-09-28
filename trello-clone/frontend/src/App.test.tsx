@@ -497,4 +497,109 @@ describe('App', () => {
       )
     })
   })
+
+  describe('list settings', () => {
+    function stubListWrites(failWrites = false) {
+      const fetchMock = vi.fn(async (input: string, init?: RequestInit) => {
+        const url = new URL(input, 'http://localhost')
+        if (init?.method && init.method !== 'GET') {
+          if (failWrites) return jsonResponse({}, false)
+          return init.method === 'DELETE'
+            ? { ok: true, status: 204, json: async () => Promise.reject(new Error('no body')) }
+            : jsonResponse({})
+        }
+        if (url.pathname === '/api/boards')
+          return jsonResponse([{ id: BOARD_ID, name: board.name }])
+        if (url.pathname === `/api/boards/${BOARD_ID}`) return jsonResponse(board)
+        return jsonResponse([])
+      })
+      vi.stubGlobal('fetch', fetchMock)
+      return fetchMock
+    }
+
+    async function openSettings() {
+      const column = await screen.findByRole('region', { name: '進行中' })
+      await userEvent.click(within(column).getByRole('button', { name: '進行中 の編集' }))
+      return column
+    }
+
+    it('is closed by default and toggles open and closed', async () => {
+      stubListWrites()
+      renderApp()
+      const column = await screen.findByRole('region', { name: '進行中' })
+      expect(within(column).queryByLabelText('リスト名を編集')).not.toBeInTheDocument()
+
+      await openSettings()
+      expect(within(column).getByLabelText('リスト名を編集')).toHaveValue('進行中')
+
+      await userEvent.click(within(column).getByRole('button', { name: '進行中 の編集' }))
+      expect(within(column).queryByLabelText('リスト名を編集')).not.toBeInTheDocument()
+    })
+
+    it('patches the trimmed new name', async () => {
+      const fetchMock = stubListWrites()
+      renderApp()
+      const column = await openSettings()
+
+      const input = within(column).getByLabelText('リスト名を編集')
+      await userEvent.clear(input)
+      await userEvent.type(input, ' レビュー中 ')
+      await userEvent.click(within(column).getByRole('button', { name: '名称を保存' }))
+
+      await waitFor(() =>
+        expect(fetchMock).toHaveBeenCalledWith(
+          '/api/lists/l2',
+          expect.objectContaining({
+            method: 'PATCH',
+            body: JSON.stringify({ name: 'レビュー中' }),
+          }),
+        ),
+      )
+    })
+
+    it('does not save a blank name', async () => {
+      stubListWrites()
+      renderApp()
+      const column = await openSettings()
+
+      await userEvent.clear(within(column).getByLabelText('リスト名を編集'))
+
+      expect(within(column).getByRole('button', { name: '名称を保存' })).toBeDisabled()
+    })
+
+    it('deletes the list only after confirmation', async () => {
+      const fetchMock = stubListWrites()
+      const confirm = vi
+        .spyOn(window, 'confirm')
+        .mockReturnValueOnce(false)
+        .mockReturnValueOnce(true)
+      renderApp()
+      const column = await openSettings()
+
+      await userEvent.click(within(column).getByRole('button', { name: 'リストを削除' }))
+      expect(fetchMock.mock.calls.some(([, init]) => init?.method === 'DELETE')).toBe(false)
+
+      await userEvent.click(within(column).getByRole('button', { name: 'リストを削除' }))
+      await waitFor(() =>
+        expect(fetchMock).toHaveBeenCalledWith(
+          '/api/lists/l2',
+          expect.objectContaining({ method: 'DELETE' }),
+        ),
+      )
+      expect(confirm).toHaveBeenLastCalledWith(expect.stringContaining('カードもすべて削除'))
+      confirm.mockRestore()
+    })
+
+    it('shows an error when saving fails', async () => {
+      stubListWrites(true)
+      renderApp()
+      const column = await openSettings()
+
+      await userEvent.click(within(column).getByRole('button', { name: '名称を保存' }))
+
+      expect(await within(column).findByRole('alert')).toHaveTextContent(
+        'リスト名を保存できませんでした',
+      )
+    })
+  })
 })
