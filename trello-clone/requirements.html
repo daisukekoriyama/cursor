@@ -513,7 +513,7 @@
       </div>
       <div>
         <dt>バージョン</dt>
-        <dd>v0.12</dd>
+        <dd>v0.13</dd>
       </div>
       <div>
         <dt>作成日</dt>
@@ -1220,7 +1220,7 @@ subtasks
               <tr><td>DBマイグレーション</td><td class="mono">Flyway</td><td>10章のスキーマをSQLファイルとしてGitで管理し、コードと一緒にバージョン管理する</td></tr>
               <tr><td>ビルド</td><td class="mono">Maven(Maven Wrapper)</td><td>解説が豊富で標準的。Maven Wrapperを同梱するため、Maven単体のインストールは不要</td></tr>
               <tr><td>API仕様書</td><td class="mono">springdoc-openapi 3.1.1(Swagger UI)</td><td>エンドポイントを画面上で確認・試行でき、curlより動作確認が容易</td></tr>
-              <tr><td>テスト</td><td class="mono">JUnit 5 / Spring Boot Test</td><td>テスト用DB(<span class="mono">taskboard_test</span>)を、開発用と同じPostgreSQLサーバー上に別に用意して使う。Dockerを導入した場合は、Testcontainersへ切り替えられる</td></tr>
+              <tr><td>テスト</td><td class="mono">JUnit 5 / Spring Boot Test</td><td>テスト用DB(<span class="mono">taskboard_test</span>)を、開発用と同じPostgreSQLサーバー(Dockerのコンテナ)上に別に用意して使う。Dockerは導入済みのため、Testcontainersへ切り替えることもできるが、現状は切り替えていない</td></tr>
             </tbody>
           </table>
         </div>
@@ -1233,7 +1233,7 @@ subtasks
             </thead>
             <tbody>
               <tr><td>DB</td><td class="mono">PostgreSQL 16以降</td><td>指定。UUID・DATE・BOOLEAN型と、外部キーの <span class="mono">ON DELETE CASCADE</span> に対応している</td></tr>
-              <tr><td>DBのローカル実行</td><td class="mono">PostgreSQL 16を直接インストール(Postgres.app同梱のバイナリ)</td><td>macOS 12ではDocker Desktopの最新版が動作しない可能性があり、Homebrewにも配布済みパッケージがないため。データはリポジトリの外(<span class="mono">~/pgdata</span>)に置く</td></tr>
+              <tr><td>DBのローカル実行</td><td class="mono">Docker の <span class="mono">postgres:17</span> コンテナ(コンテナ名 <span class="mono">taskboard-pg</span>、PostgreSQL 17.11)</td><td>Docker(28.1.1)がmacOS 12でも動作したため、DBのインストールが不要で、作り直しも容易なDockerに切り替えた(当初はPostgres.appのバイナリを直接インストールしていた)。データはDockerのボリュームに置き、リポジトリの外に保つ。DBは16以降の要件を満たしていればよく、17でも動作する</td></tr>
               <tr><td>フロントの実行環境</td><td class="mono">Node.js(LTS)</td><td>ViteとnpmがNode.jsを必要とするため(導入済み)</td></tr>
               <tr><td>バージョン管理</td><td class="mono">Git / GitHub</td><td>これまでどおり</td></tr>
             </tbody>
@@ -1247,7 +1247,7 @@ subtasks
         </ul>
 
         <h3>環境準備</h3>
-        <p class="muted">2026-09-22時点で、開発用のMacには次のものを導入済み。Node.js v24(LTS)、JDK 21(Eclipse Temurin 21.0.12.1)、PostgreSQL 16.15(Postgres.app同梱のバイナリ)。Dockerは導入せず、Mavenは単体では入れずMaven Wrapperを使う。DBは <span class="mono">taskboard</span>(ユーザーも <span class="mono">taskboard</span>)を作成済みで、開発用の接続情報はバックエンドの設定ファイルに記載する。PostgreSQLはmacOSの起動時に自動では立ち上がらないため、必要なときに手動で起動する(RISK-06)。</p>
+        <p class="muted">2026-09-28時点で、開発用のMac(macOS 12.7)には次のものを導入済み。Node.js v24.18.0(LTS)、JDK 21(Eclipse Temurin 21.0.12.1)、Docker 28.1.1。DBはDockerの <span class="mono">postgres:17</span> コンテナ(<span class="mono">taskboard-pg</span>、PostgreSQL 17.11)で動かし、開発用DB <span class="mono">taskboard</span> とテスト用DB <span class="mono">taskboard_test</span> を作成している(ユーザーも <span class="mono">taskboard</span>)。Mavenは単体では入れずMaven Wrapperを使う。開発用の接続情報はバックエンドの設定ファイルに記載する。Dockerはコンテナが停止していると接続できないため、macOSの再起動後などは <span class="mono">docker start taskboard-pg</span> で起動する(RISK-06)。セットアップ手順と各ツールのバージョンは、リポジトリ直下の <span class="mono">README.md</span> にまとめている。</p>
       </section>
 
       <section class="doc-section" id="constraints">
@@ -1307,7 +1307,7 @@ subtasks
                 <td class="req-id">RISK-06</td>
                 <td>バックエンド実装に必要な環境(JDK・PostgreSQL)の導入に時間がかかる。お使いのmacOS 12ではHomebrewに配布済みパッケージがなく、ソースからのビルドが1時間以上かかっても終わらなかった。Dockerも最新版が動作しない可能性がある</td>
                 <td><span class="pill pill-should">中</span></td>
-                <td>ビルド済みバイナリ(Temurin JDK、Postgres.app)を使って導入し、2026-09-22に完了した。セットアップ手順はバックエンドのREADMEに残す。今後、OSを更新する場合は導入済みの環境への影響を確認する</td>
+                <td>ビルド済みバイナリ(Temurin JDK)を使って導入し、2026-09-22に完了した。DBは当初Postgres.appを使っていたが、Docker(28.1.1)が動作したため、現在はDockerのPostgreSQLコンテナで動かしている(2026-09-28時点で確認済み)。セットアップ手順はリポジトリ直下のREADMEに残す。今後、OSを更新する場合は導入済みの環境への影響を確認する</td>
               </tr>
             </tbody>
           </table>
@@ -1483,6 +1483,11 @@ subtasks
                 <td class="mono">2026-09-28</td>
                 <td>フロントエンド(<span class="mono">frontend/</span>: Vite + React + TypeScript + TanStack Query)の環境を構築し、カード検索の結果をボード表示する画面を実装。11章に、<span class="mono">/api</span> プロキシの方式、静的解析ツール(ESLintからoxlintへ)、ボード切替の暫定実装を反映し、ロードマップの進捗を更新</td>
               </tr>
+              <tr>
+                <td class="mono">v0.13</td>
+                <td class="mono">2026-09-28</td>
+                <td>DBの実行環境を実際の構成に合わせて更新(Postgres.appの直接インストールから、DockerのPostgreSQL 17コンテナへ)。11章の「DBのローカル実行」「環境準備」「テスト」の記述とRISK-06の対応策を更新し、バージョンと手順はリポジトリ直下のREADMEにまとめた旨を追記</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -1491,7 +1496,7 @@ subtasks
     </main>
   </div>
 
-  <footer class="doc-footer">TB-REQ-001 &middot; v0.12 &middot; 2026-09-28</footer>
+  <footer class="doc-footer">TB-REQ-001 &middot; v0.13 &middot; 2026-09-28</footer>
 
 </div>
 
