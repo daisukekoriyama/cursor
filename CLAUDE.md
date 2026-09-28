@@ -22,7 +22,8 @@
 
 ## 4. Pull Request
 - ブランチは push し、`gh pr create` で PR を作る。本文に `Closes #番号` を必ず書く。
-- マージは **Squash and merge**。マージ後にブランチは自動削除される。
+- マージは **Squash and merge**。`gh pr merge <番号> --squash --delete-branch` を使う(`--delete-branch` を必ず付ける。リモートのブランチはリポジトリ設定でも自動削除されるが、ローカルのブランチはこのオプションで消える)。
+- 本文の `Closes #番号` により、マージ時にIssueは自動でクローズされる。マージ後に `gh issue view <番号>` でクローズを確認する。
 - 自分で確認した内容(動作確認・テスト結果)を PR 本文に書く。未確認の項目は未確認と書く。
 
 ## 5. 禁止事項
@@ -36,4 +37,4 @@
 1. `git status` がクリーンで、`main` が最新(`git pull --ff-only`)
 2. Issue がある(なければ作る)
 3. `<種別>/<番号>-<要約>` のブランチを切る
-4. 実装 → コミット → push → PR 作成 → マージ → ローカルの `main` を更新
+4. 実装 → コミット → push → PR 作成 → マージ(`--delete-branch`)→ `git checkout main && git pull --ff-only`
