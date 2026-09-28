@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ApiError, apiGet } from './client'
+import { ApiError, apiGet, apiPost } from './client'
 
 function mockFetch(response: Partial<Response>) {
   const fetchMock = vi.fn().mockResolvedValue(response)
@@ -25,5 +25,26 @@ describe('apiGet', () => {
       name: ApiError.name,
       status: 500,
     })
+  })
+})
+
+describe('apiPost', () => {
+  it('sends the body as JSON and returns the parsed response', async () => {
+    const fetchMock = mockFetch({ ok: true, json: async () => ({ id: 'c1' }) })
+
+    const result = await apiPost('/lists/l1/cards', { text: 'a' })
+
+    expect(result).toEqual({ id: 'c1' })
+    expect(fetchMock).toHaveBeenCalledWith('/api/lists/l1/cards', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{"text":"a"}',
+    })
+  })
+
+  it('throws ApiError with the status when the response is not ok', async () => {
+    mockFetch({ ok: false, status: 400 })
+
+    await expect(apiPost('/lists/l1/cards', {})).rejects.toMatchObject({ status: 400 })
   })
 })

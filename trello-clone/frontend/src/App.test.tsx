@@ -156,4 +156,68 @@ describe('App', () => {
     expect(document.querySelector('img')).toBeNull()
     board.cards = cards
   })
+
+  describe('adding a card', () => {
+    function stubCreate(status = 201) {
+      const created = card('c-new', 'l2', '新しいカード', { due: '2026-11-01' })
+      const fetchMock = vi.fn(async (input: string, init?: RequestInit) => {
+        const url = new URL(input, 'http://localhost')
+        if (init?.method === 'POST') {
+          return status === 201
+            ? { ok: true, status, json: async () => created }
+            : jsonResponse({}, false)
+        }
+        if (url.pathname === '/api/boards')
+          return jsonResponse([{ id: BOARD_ID, name: board.name }])
+        if (url.pathname === `/api/boards/${BOARD_ID}`) return jsonResponse(board)
+        return jsonResponse([])
+      })
+      vi.stubGlobal('fetch', fetchMock)
+      return fetchMock
+    }
+
+    it('posts the text and due date to the list and clears the form', async () => {
+      const fetchMock = stubCreate()
+      renderApp()
+      const column = await screen.findByRole('region', { name: '進行中' })
+
+      await userEvent.type(within(column).getByLabelText('カードの内容'), ' 新しいカード ')
+      await userEvent.type(within(column).getByLabelText('期限'), '2026-11-01')
+      await userEvent.click(within(column).getByRole('button', { name: '追加' }))
+
+      await waitFor(() =>
+        expect(fetchMock).toHaveBeenCalledWith(
+          '/api/lists/l2/cards',
+          expect.objectContaining({
+            method: 'POST',
+            body: JSON.stringify({ text: '新しいカード', due: '2026-11-01' }),
+          }),
+        ),
+      )
+      await waitFor(() => expect(within(column).getByLabelText('カードの内容')).toHaveValue(''))
+    })
+
+    it('does not submit blank text', async () => {
+      const fetchMock = stubCreate()
+      renderApp()
+      const column = await screen.findByRole('region', { name: '進行中' })
+
+      await userEvent.type(within(column).getByLabelText('カードの内容'), '   ')
+
+      expect(within(column).getByRole('button', { name: '追加' })).toBeDisabled()
+      expect(fetchMock.mock.calls.some(([, init]) => init?.method === 'POST')).toBe(false)
+    })
+
+    it('shows an error and keeps the input when the API fails', async () => {
+      stubCreate(500)
+      renderApp()
+      const column = await screen.findByRole('region', { name: '進行中' })
+
+      await userEvent.type(within(column).getByLabelText('カードの内容'), '失敗するカード')
+      await userEvent.click(within(column).getByRole('button', { name: '追加' }))
+
+      expect(await within(column).findByRole('alert')).toHaveTextContent('追加できませんでした')
+      expect(within(column).getByLabelText('カードの内容')).toHaveValue('失敗するカード')
+    })
+  })
 })

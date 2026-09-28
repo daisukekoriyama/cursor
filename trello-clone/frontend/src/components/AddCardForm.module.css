@@ -1,0 +1,22 @@
+.form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.text {
+  flex: 1 1 100%;
+}
+
+.due {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.error {
+  flex: 1 1 100%;
+  margin: 0;
+  color: #c9372c;
+  font-size: 12px;
+}

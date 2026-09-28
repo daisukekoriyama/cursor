@@ -1,5 +1,5 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { apiGet } from './client'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { apiGet, apiPost } from './client'
 import type { BoardDetail, BoardSummary, CardResponse } from './types'
 
 export type CompletedFilter = 'all' | 'completed' | 'incomplete'
@@ -42,5 +42,25 @@ export function useSearchCards(boardId: string | undefined, filters: SearchFilte
       }),
     enabled: boardId !== undefined && hasActiveFilters(filters),
     placeholderData: keepPreviousData,
+  })
+}
+
+export interface NewCard {
+  listId: string
+  text: string
+  due: string
+}
+
+// 作成後は、ボード全体と検索結果の両方を再取得して表示に反映する
+export function useCreateCard() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ listId, text, due }: NewCard) =>
+      apiPost<CardResponse>(`/lists/${listId}/cards`, { text, due: due || undefined }),
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['boards'] }),
+        queryClient.invalidateQueries({ queryKey: ['cards'] }),
+      ]),
   })
 }
