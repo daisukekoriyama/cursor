@@ -513,7 +513,7 @@
       </div>
       <div>
         <dt>バージョン</dt>
-        <dd>v0.24</dd>
+        <dd>v0.25</dd>
       </div>
       <div>
         <dt>作成日</dt>
@@ -1053,7 +1053,7 @@
               </tr>
               <tr>
                 <td class="req-id">SCR-05</td>
-                <td>React版のボード画面(検索・追加・カード詳細・移動・完了・リスト編集)</td>
+                <td>React版のボード画面(検索・追加・カード詳細・移動・完了・リスト編集・期限順)</td>
                 <td>ボード選択・検索欄・完了状態の切り替えと、リスト列のカード表示を持つ(REQ-18)。詳細は下の「React版の画面」を参照</td>
               </tr>
             </tbody>
@@ -1067,7 +1067,7 @@
 [SCR-04 ボード一覧画面] &#8212;ボード選択&#8594; [SCR-01 ボード画面]</div>
 
         <h3>React版の画面(<span class="mono">frontend/</span>)</h3>
-        <p>React版は、現時点では検索結果をボードとして表示し、カード・リスト・ボードを追加でき、カードの詳細パネルで編集・削除・別リストへの移動と小項目の操作が、カードのチェックボックスで完了リストへ移せ、リストの編集パネルで名称変更・削除・完了リストの指定ができる画面である(カードのドラッグ&ドロップ移動、カレンダー、最終更新は未移行)。上から順に、タイトル、ボード選択・ボード作成、検索欄、リスト列を持つ。</p>
+        <p>React版は、現時点では検索結果をボードとして表示し、カード・リスト・ボードを追加でき、カードの詳細パネルで編集・削除・別リストへの移動と小項目の操作が、カードのチェックボックスで完了リストへ移せ、リストの編集パネルで名称変更・削除・完了リストの指定ができる画面である。各列のカードは、期限の早い順(期限なしは末尾)に並ぶ(カードのドラッグ&ドロップ移動、カレンダー、最終更新は未移行)。上から順に、タイトル、ボード選択・ボード作成、検索欄、リスト列を持つ。</p>
         <div class="structure-tree"><span class="c">header</span>
 &nbsp;&nbsp;h1 &quot;タスクボード&quot;
 &nbsp;&nbsp;select <span class="c">(ボード選択。初期は先頭のボード)</span>
@@ -1078,7 +1078,7 @@
 &nbsp;&nbsp;select <span class="c">(完了状態: すべて / 未完了 / 完了)</span>
 
 <span class="c">div.board</span>
-&nbsp;&nbsp;section.list &times; N <span class="c">(リスト名・件数・編集ボタン。絞り込み中もすべての列を表示)</span>
+&nbsp;&nbsp;section.list &times; N <span class="c">(リスト名・件数・編集ボタン。カードは期限の早い順、期限なしは末尾、同順位はAPIの並び順。絞り込み中もすべての列を表示)</span>
 &nbsp;&nbsp;&nbsp;&nbsp;settings <span class="c">(編集を開いたときのみ: 名称の変更フォームと保存 / 完了リストにする(チェック) / リストを削除)</span>
 &nbsp;&nbsp;&nbsp;&nbsp;li.card &times; N
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;checkbox <span class="c">(完了にする。完了リスト以外のカードに出す。チェックすると完了リストへ移る。完了リストが無いボードでは出さない)</span>
@@ -1296,7 +1296,7 @@ subtasks
         <ul class="nfr-list" style="grid-template-columns: 1fr;">
           <li style="grid-template-columns: 1fr;">現行のプロトタイプ(<span class="mono">index.html</span>)はバックエンド・データベースを持たず、データをブラウザのlocalStorageに保存するため、ブラウザのデータを消去するとタスクも失われる。別のブラウザ・別の端末からは同じデータを参照できない</li>
           <li style="grid-template-columns: 1fr;">React + Spring Boot + PostgreSQL版(REQ-14)は、データをPostgreSQLに保存する。利用にはPostgreSQL(Dockerのコンテナ)とバックエンドが稼働していることが前提で、どちらかが停止していると画面にデータが表示されない</li>
-          <li style="grid-template-columns: 1fr;">React版のフロントエンドは、現時点ではカード検索の結果のボード表示、カード・リスト・ボードの追加、カードの編集・削除、小項目の操作、リストの名称変更・削除、詳細パネルのセレクトによるカードの移動、完了チェックボックスと完了リストの指定を実装している。カードのドラッグ&ドロップ移動、カレンダー等は、プロトタイプ側にのみ実装されている</li>
+          <li style="grid-template-columns: 1fr;">React版のフロントエンドは、現時点ではカード検索の結果のボード表示、カード・リスト・ボードの追加、カードの編集・削除、小項目の操作、リストの名称変更・削除、詳細パネルのセレクトによるカードの移動、完了チェックボックスと完了リストの指定、各列での期限順の並び(REQ-07)を実装している。カードのドラッグ&ドロップ移動、カレンダー等は、プロトタイプ側にのみ実装されている</li>
           <li style="grid-template-columns: 1fr;">認証機能がないため、同じ端末・ブラウザを使う人であれば誰でも閲覧・編集できる。React + Spring Boot版はAPIも認証なしのため、インターネットへ公開せず、手元の環境でのみ運用する</li>
           <li style="grid-template-columns: 1fr;">開発用のサーバーは、バックエンドを8080番、フロントエンドを5173番のポートに固定する(バックエンドのCORS許可とフロントエンドのプロキシ先がこの2つの前提のため)。これらのポートを他のアプリが使用している場合は、そのプロセスを停止してから起動する</li>
         </ul>
@@ -1378,7 +1378,7 @@ subtasks
             <span class="step-num">02</span>
             <div>
               <p class="step-title">同一リスト内の手動並び替え(REQ-11)</p>
-              <p class="step-desc">現在は期限順に自動で並ぶ仕様のため、同じ期限のカードや期限なしのカードを自由な順序でドラッグ並び替えできるようにする。</p>
+              <p class="step-desc">現在は期限順に自動で並ぶ仕様のため(React版も画面側で期限順に並べており、手動の並び替えを入れるときは、この規則との整理が必要になる)、同じ期限のカードや期限なしのカードを自由な順序でドラッグ並び替えできるようにする。</p>
             </div>
           </li>
           <li>
@@ -1399,7 +1399,7 @@ subtasks
             <span class="step-num">05</span>
             <div>
               <p class="step-title">フロントエンドのReact移行とAPI接続(REQ-14の完了)<span class="muted mono">(環境構築と検索・ボード表示は実装済み)</span></p>
-              <p class="step-desc"><span class="mono">frontend/</span> にVite + React + TypeScriptの環境を構築し、カード検索API(<span class="mono">GET /cards</span>)の結果をリスト列のボードとして表示するところまで実装した(ボードはセレクトで切り替えられる)。続けてカードの追加(<span class="mono">POST /lists/{id}/cards</span>)、リストの追加(<span class="mono">POST /boards/{id}/lists</span>)、ボードの作成(<span class="mono">POST /boards</span>)を実装した。続けてカードの編集・削除(<span class="mono">PATCH・DELETE /cards/{id}</span>)と小項目の追加・完了・削除を、カードの詳細パネルとして実装した。続けてリストの名称変更・削除(<span class="mono">PATCH・DELETE /lists/{id}</span>)を、リストの編集パネルとして実装した。続けて、カードの別リストへの移動(詳細パネルのセレクト)と、完了チェックボックス・完了リストの指定(リストの編集パネル)を実装した。残りは、ドラッグ&ドロップでの移動、期限順の並び(REQ-07)、カレンダー等の移行である。現行のバニラJS版の機能をReact(TypeScript)のコンポーネントに移し、localStorageからAPI呼び出しに切り替える。現行のフロントは「完了」リストをID(<span class="mono">done</span>)で識別しているが、APIのリストIDはUUIDのため、完了リストを見分ける項目として、リストに完了リストかどうかのフラグ(<span class="mono">is_done</span>)を追加した(マイグレーションV3。バックエンド・フロントとも実装済み)。</p>
+              <p class="step-desc"><span class="mono">frontend/</span> にVite + React + TypeScriptの環境を構築し、カード検索API(<span class="mono">GET /cards</span>)の結果をリスト列のボードとして表示するところまで実装した(ボードはセレクトで切り替えられる)。続けてカードの追加(<span class="mono">POST /lists/{id}/cards</span>)、リストの追加(<span class="mono">POST /boards/{id}/lists</span>)、ボードの作成(<span class="mono">POST /boards</span>)を実装した。続けてカードの編集・削除(<span class="mono">PATCH・DELETE /cards/{id}</span>)と小項目の追加・完了・削除を、カードの詳細パネルとして実装した。続けてリストの名称変更・削除(<span class="mono">PATCH・DELETE /lists/{id}</span>)を、リストの編集パネルとして実装した。続けて、カードの別リストへの移動(詳細パネルのセレクト)と、完了チェックボックス・完了リストの指定(リストの編集パネル)を実装した。期限順の並び(REQ-07)は、API側では変えず、画面側で列ごとに並べ替える(検索結果の表示も同じ)。並び順は期限の昇順、期限なしは末尾、同じ期限どうしはAPIの並び(order)とし、完了リストも同じ規則とする。残りは、ドラッグ&ドロップでの移動、カレンダー等の移行である。現行のバニラJS版の機能をReact(TypeScript)のコンポーネントに移し、localStorageからAPI呼び出しに切り替える。現行のフロントは「完了」リストをID(<span class="mono">done</span>)で識別しているが、APIのリストIDはUUIDのため、完了リストを見分ける項目として、リストに完了リストかどうかのフラグ(<span class="mono">is_done</span>)を追加した(マイグレーションV3。バックエンド・フロントとも実装済み)。</p>
             </div>
           </li>
           <li>
@@ -1592,6 +1592,11 @@ subtasks
                 <td class="mono">2026-09-28</td>
                 <td>React版に完了チェックボックス(完了リストへの移動)、リスト編集パネルでの完了リストの指定、完了リストでの終了日表示(REQ-09, REQ-10)を実装したことを反映。8章(画面)、12章の制約、進め方の記述を更新</td>
               </tr>
+              <tr>
+                <td class="mono">v0.25</td>
+                <td class="mono">2026-09-28</td>
+                <td>React版に、各列のカードを期限順(期限なしは末尾、同順位はAPIの並び)に並べる処理(REQ-07)を画面側で実装したことを反映。8章(画面)、12章の進め方の記述、14章の手動並び替えの注記を更新</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -1600,7 +1605,7 @@ subtasks
     </main>
   </div>
 
-  <footer class="doc-footer">TB-REQ-001 &middot; v0.24 &middot; 2026-09-28</footer>
+  <footer class="doc-footer">TB-REQ-001 &middot; v0.25 &middot; 2026-09-28</footer>
 
 </div>
 
