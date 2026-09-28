@@ -135,6 +135,43 @@ class TaskboardApiTest {
     }
 
     @Test
+    void movingACardToAnotherListPutsItAtTheEnd() throws Exception {
+        String boardId = createId("/boards", "{\"name\":\"test-move\"}");
+        String fromId = createId("/boards/" + boardId + "/lists", "{\"name\":\"from\"}");
+        String toId = createId("/boards/" + boardId + "/lists", "{\"name\":\"to\"}");
+        createId("/lists/" + fromId + "/cards", "{\"text\":\"a\"}");
+        String moved = createId("/lists/" + fromId + "/cards", "{\"text\":\"b\"}");
+        createId("/lists/" + toId + "/cards", "{\"text\":\"x\"}");
+        createId("/lists/" + toId + "/cards", "{\"text\":\"y\"}");
+
+        mvc.perform(patch("/cards/" + moved)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"listId\":\"" + toId + "\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.listId").value(toId))
+                .andExpect(jsonPath("$.order").value(2));
+
+        // 同じリストを指定しても並びは変わらない
+        mvc.perform(patch("/cards/" + moved)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"listId\":\"" + toId + "\"}"))
+                .andExpect(jsonPath("$.order").value(2));
+
+        // 空のリストへ移すと先頭(0)になる
+        String emptyId = createId("/boards/" + boardId + "/lists", "{\"name\":\"empty\"}");
+        mvc.perform(patch("/cards/" + moved)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"listId\":\"" + emptyId + "\"}"))
+                .andExpect(jsonPath("$.order").value(0));
+
+        // order を明示したときはその値になる
+        mvc.perform(patch("/cards/" + moved)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"listId\":\"" + toId + "\",\"order\":7}"))
+                .andExpect(jsonPath("$.order").value(7));
+    }
+
+    @Test
     void invalidInputIsRejectedWithA400AndMessage() throws Exception {
         mvc.perform(post("/boards").contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"  \"}"))
                 .andExpect(status().isBadRequest())

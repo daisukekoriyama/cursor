@@ -7,10 +7,11 @@ import styles from './ListColumn.module.css'
 
 interface Props {
   list: ListResponse
+  lists: ListResponse[]
   cards: CardResponse[]
 }
 
-export function ListColumn({ list, cards }: Props) {
+export function ListColumn({ list, lists, cards }: Props) {
   const [editing, setEditing] = useState(false)
 
   return (
@@ -30,7 +31,7 @@ export function ListColumn({ list, cards }: Props) {
       {editing && <ListSettings list={list} />}
       <ul className={styles.cards}>
         {cards.map((card) => (
-          <CardItem key={card.id} card={card} />
+          <CardItem key={card.id} card={card} lists={lists} />
         ))}
       </ul>
       <AddCardForm listId={list.id} />

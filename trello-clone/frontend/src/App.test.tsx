@@ -485,6 +485,43 @@ describe('App', () => {
       )
     })
 
+    it('moves the card to the chosen list without sending an order', async () => {
+      const fetchMock = stubWrites()
+      renderApp()
+      const column = await openDetail()
+
+      const select = within(column).getByRole('combobox', { name: '移動先' })
+      expect(select).toHaveValue('l1')
+      expect(
+        within(select)
+          .getAllByRole('option')
+          .map((o) => o.textContent),
+      ).toEqual(['未着手', '進行中', '完了'])
+      await userEvent.selectOptions(select, '進行中')
+
+      await waitFor(() =>
+        expect(fetchMock).toHaveBeenCalledWith(
+          '/api/cards/c1',
+          expect.objectContaining({ method: 'PATCH', body: JSON.stringify({ listId: 'l2' }) }),
+        ),
+      )
+    })
+
+    it('shows an error when moving fails', async () => {
+      stubWrites(true)
+      renderApp()
+      const column = await openDetail()
+
+      await userEvent.selectOptions(
+        within(column).getByRole('combobox', { name: '移動先' }),
+        '完了',
+      )
+
+      expect(await within(column).findByRole('alert')).toHaveTextContent(
+        'カードを移動できませんでした',
+      )
+    })
+
     it('shows an error when saving fails', async () => {
       stubWrites(true)
       renderApp()

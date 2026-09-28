@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import type { CardResponse } from '../api/types'
+import type { CardResponse, ListResponse } from '../api/types'
 import { CardDetail } from './CardDetail'
 import styles from './CardItem.module.css'
 
 interface Props {
   card: CardResponse
+  lists: ListResponse[]
 }
 
 // "yyyy-MM-dd" を "M/D" に整形する
@@ -13,7 +14,7 @@ function formatDate(date: string): string {
   return `${Number(month)}/${Number(day)}`
 }
 
-export function CardItem({ card }: Props) {
+export function CardItem({ card, lists }: Props) {
   const [open, setOpen] = useState(false)
   const doneCount = card.subtasks.filter((subtask) => subtask.done).length
 
@@ -42,7 +43,7 @@ export function CardItem({ card }: Props) {
       >
         {open ? '閉じる' : '詳細'}
       </button>
-      {open && <CardDetail card={card} />}
+      {open && <CardDetail card={card} lists={lists} />}
     </li>
   )
 }

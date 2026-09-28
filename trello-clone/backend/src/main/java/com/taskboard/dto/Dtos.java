@@ -46,6 +46,7 @@ public final class Dtos {
     }
 
     /** 省略(null)した項目は変更しない。due / completedAt は空文字を指定すると値を消す。 */
+    /** listId だけを指定して別のリストへ移すと、移動先の末尾に置かれる(order を指定するとその値になる)。 */
     public record UpdateCardRequest(
             String text, String due, UUID listId, Integer order, String completedAt) {
     }
