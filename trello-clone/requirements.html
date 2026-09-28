@@ -513,7 +513,7 @@
       </div>
       <div>
         <dt>バージョン</dt>
-        <dd>v0.18</dd>
+        <dd>v0.19</dd>
       </div>
       <div>
         <dt>作成日</dt>
@@ -586,7 +586,7 @@
               <li>ユーザー登録・ログイン</li>
               <li>複数ユーザーでの共有・権限管理</li>
               <li>Next.js(SSR/SSG)などのフルスタックフレームワークの採用</li>
-              <li>複数ボードの画面からの作成(APIでは作成でき、React版ではセレクトによる切り替えのみ実装済み)</li>
+              <li>旧プロトタイプ(index.html)での複数ボードの作成・切り替え(React版では、画面からの作成と切り替えを実装済み)</li>
               <li>同一リスト内でのカードの手動並び替え</li>
             </ul>
           </div>
@@ -1049,11 +1049,11 @@
               <tr>
                 <td class="req-id">SCR-04</td>
                 <td>ボード一覧/切り替え画面<span class="muted mono">(一部実装)</span></td>
-                <td>複数ボードを作成・切り替える(REQ-12)。ボードの作成は未実装。切り替えは、React版のヘッダーにあるセレクト(SCR-05)で暫定的に行える</td>
+                <td>複数ボードを作成・切り替える(REQ-12)。React版では、ヘッダーのセレクト(SCR-05)で切り替え、隣の作成フォームで新規ボードを作成できる(作成後はそのボードに切り替わる)。作成直後のボードにはリストが無いため、リスト追加から始める</td>
               </tr>
               <tr>
                 <td class="req-id">SCR-05</td>
-                <td>React版のボード画面(検索・カード追加・リスト追加)</td>
+                <td>React版のボード画面(検索・カード追加・リスト追加・ボード作成)</td>
                 <td>ボード選択・検索欄・完了状態の切り替えと、リスト列のカード表示を持つ(REQ-18)。詳細は下の「React版の画面」を参照</td>
               </tr>
             </tbody>
@@ -1067,10 +1067,11 @@
 [SCR-04 ボード一覧画面] &#8212;ボード選択&#8594; [SCR-01 ボード画面]</div>
 
         <h3>React版の画面(<span class="mono">frontend/</span>)</h3>
-        <p>React版は、現時点では検索結果をボードとして表示し、カード・リストを追加できる画面である(カードの編集・移動・削除、リストの名称変更・削除、カレンダー、最終更新は未移行)。上から順に、タイトル、ボード選択、検索欄、リスト列を持つ。</p>
+        <p>React版は、現時点では検索結果をボードとして表示し、カード・リスト・ボードを追加できる画面である(カードの編集・移動・削除、リストの名称変更・削除、カレンダー、最終更新は未移行)。上から順に、タイトル、ボード選択・ボード作成、検索欄、リスト列を持つ。</p>
         <div class="structure-tree"><span class="c">header</span>
 &nbsp;&nbsp;h1 &quot;タスクボード&quot;
 &nbsp;&nbsp;select <span class="c">(ボード選択。初期は先頭のボード)</span>
+&nbsp;&nbsp;form <span class="c">(ボード作成: ボード名・作成ボタン。作成後、そのボードを選択する)</span>
 
 <span class="c">form[role=search]</span>
 &nbsp;&nbsp;input[type=search] <span class="c">(キーワード。入力の0.3秒後に検索)</span>
@@ -1083,7 +1084,7 @@
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;badges <span class="c">(期限 / 終了日 / サブタスク進捗 例: 1/2)</span>
 &nbsp;&nbsp;form <span class="c">(カード追加: 内容・期限・追加ボタン。空白のみでは送信できない)</span>
 &nbsp;&nbsp;form <span class="c">(リスト追加: 最後の列の右に置く。リスト名・追加ボタン)</span></div>
-        <p class="muted">読み込み中は「読み込み中…」、通信に失敗したときは再試行ボタン付きのエラー、検索に該当が無いときは「該当するカードはありません。」を表示する。カード・リストの追加に失敗したときは、そのフォームの中にエラーを表示して入力内容を残す。カードの文字列はReactの標準のエスケープに任せ、HTMLとしては解釈しない。</p>
+        <p class="muted">読み込み中は「読み込み中…」、通信に失敗したときは再試行ボタン付きのエラー、検索に該当が無いときは「該当するカードはありません。」を表示する。カード・リスト・ボードの追加に失敗したときは、そのフォームの中にエラーを表示して入力内容を残す。カードの文字列はReactの標準のエスケープに任せ、HTMLとしては解釈しない。</p>
       </section>
 
       <section class="doc-section" id="datamodel">
@@ -1290,7 +1291,7 @@ subtasks
         <ul class="nfr-list" style="grid-template-columns: 1fr;">
           <li style="grid-template-columns: 1fr;">現行のプロトタイプ(<span class="mono">index.html</span>)はバックエンド・データベースを持たず、データをブラウザのlocalStorageに保存するため、ブラウザのデータを消去するとタスクも失われる。別のブラウザ・別の端末からは同じデータを参照できない</li>
           <li style="grid-template-columns: 1fr;">React + Spring Boot + PostgreSQL版(REQ-14)は、データをPostgreSQLに保存する。利用にはPostgreSQL(Dockerのコンテナ)とバックエンドが稼働していることが前提で、どちらかが停止していると画面にデータが表示されない</li>
-          <li style="grid-template-columns: 1fr;">React版のフロントエンドは、現時点ではカード検索の結果のボード表示とカード・リストの追加のみを実装している。カードの編集・移動・削除、リストの名称変更・削除、カレンダー等は、プロトタイプ側にのみ実装されている</li>
+          <li style="grid-template-columns: 1fr;">React版のフロントエンドは、現時点ではカード検索の結果のボード表示とカード・リスト・ボードの追加のみを実装している。カードの編集・移動・削除、リストの名称変更・削除、カレンダー等は、プロトタイプ側にのみ実装されている</li>
           <li style="grid-template-columns: 1fr;">認証機能がないため、同じ端末・ブラウザを使う人であれば誰でも閲覧・編集できる。React + Spring Boot版はAPIも認証なしのため、インターネットへ公開せず、手元の環境でのみ運用する</li>
           <li style="grid-template-columns: 1fr;">開発用のサーバーは、バックエンドを8080番、フロントエンドを5173番のポートに固定する(バックエンドのCORS許可とフロントエンドのプロキシ先がこの2つの前提のため)。これらのポートを他のアプリが使用している場合は、そのプロセスを停止してから起動する</li>
         </ul>
@@ -1393,7 +1394,7 @@ subtasks
             <span class="step-num">05</span>
             <div>
               <p class="step-title">フロントエンドのReact移行とAPI接続(REQ-14の完了)<span class="muted mono">(環境構築と検索・ボード表示は実装済み)</span></p>
-              <p class="step-desc"><span class="mono">frontend/</span> にVite + React + TypeScriptの環境を構築し、カード検索API(<span class="mono">GET /cards</span>)の結果をリスト列のボードとして表示するところまで実装した(ボードはセレクトで切り替えられる)。続けてカードの追加(<span class="mono">POST /lists/{id}/cards</span>)とリストの追加(<span class="mono">POST /boards/{id}/lists</span>)を実装した。残りは、カードの編集・移動、リストの名称変更・削除、ボード・小項目の追加、カレンダー等の移行である。現行のバニラJS版の機能をReact(TypeScript)のコンポーネントに移し、localStorageからAPI呼び出しに切り替える。現行のフロントは「完了」リストをID(<span class="mono">done</span>)で識別しているが、APIのリストIDはUUIDのため、完了リストを見分ける項目をリストに追加する必要がある(DBマイグレーションで対応する)。</p>
+              <p class="step-desc"><span class="mono">frontend/</span> にVite + React + TypeScriptの環境を構築し、カード検索API(<span class="mono">GET /cards</span>)の結果をリスト列のボードとして表示するところまで実装した(ボードはセレクトで切り替えられる)。続けてカードの追加(<span class="mono">POST /lists/{id}/cards</span>)、リストの追加(<span class="mono">POST /boards/{id}/lists</span>)、ボードの作成(<span class="mono">POST /boards</span>)を実装した。残りは、カードの編集・移動、リストの名称変更・削除、小項目の追加、カレンダー等の移行である。現行のバニラJS版の機能をReact(TypeScript)のコンポーネントに移し、localStorageからAPI呼び出しに切り替える。現行のフロントは「完了」リストをID(<span class="mono">done</span>)で識別しているが、APIのリストIDはUUIDのため、完了リストを見分ける項目をリストに追加する必要がある(DBマイグレーションで対応する)。</p>
             </div>
           </li>
           <li>
@@ -1556,6 +1557,11 @@ subtasks
                 <td class="mono">2026-09-28</td>
                 <td>React版にリスト追加(REQ-05の追加部分)を実装したことを反映。8章(画面)、12章の制約、進め方の記述を更新</td>
               </tr>
+              <tr>
+                <td class="mono">v0.19</td>
+                <td class="mono">2026-09-28</td>
+                <td>React版にボード作成(REQ-12)を実装したことを反映。2章の対象外の記述、8章(SCR-05・画面)、12章の制約、進め方の記述を更新</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -1564,7 +1570,7 @@ subtasks
     </main>
   </div>
 
-  <footer class="doc-footer">TB-REQ-001 &middot; v0.18 &middot; 2026-09-28</footer>
+  <footer class="doc-footer">TB-REQ-001 &middot; v0.19 &middot; 2026-09-28</footer>
 
 </div>
 

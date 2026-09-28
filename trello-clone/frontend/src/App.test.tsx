@@ -276,4 +276,71 @@ describe('App', () => {
       expect(input).toHaveValue('失敗')
     })
   })
+
+  describe('adding a board', () => {
+    function stubCreateBoard(ok = true) {
+      const summaries = [{ id: BOARD_ID, name: board.name }]
+      const fetchMock = vi.fn(async (input: string, init?: RequestInit) => {
+        const url = new URL(input, 'http://localhost')
+        if (init?.method === 'POST') {
+          if (!ok) return jsonResponse({}, false)
+          summaries.push({ id: 'board-new', name: '新しいボード' })
+          return jsonResponse({ id: 'board-new', name: '新しいボード' })
+        }
+        if (url.pathname === '/api/boards') return jsonResponse(summaries)
+        if (url.pathname === '/api/boards/board-new')
+          return jsonResponse({ id: 'board-new', name: '新しいボード', lists: [], cards: [] })
+        if (url.pathname === `/api/boards/${BOARD_ID}`) return jsonResponse(board)
+        return jsonResponse([])
+      })
+      vi.stubGlobal('fetch', fetchMock)
+      return fetchMock
+    }
+
+    it('posts the name, then switches to the new empty board', async () => {
+      const fetchMock = stubCreateBoard()
+      renderApp()
+      const input = await screen.findByLabelText('ボード名')
+
+      await userEvent.type(input, ' 新しいボード ')
+      await userEvent.click(screen.getByRole('button', { name: 'ボード作成' }))
+
+      await waitFor(() =>
+        expect(fetchMock).toHaveBeenCalledWith(
+          '/api/boards',
+          expect.objectContaining({
+            method: 'POST',
+            body: JSON.stringify({ name: '新しいボード' }),
+          }),
+        ),
+      )
+      await waitFor(() =>
+        expect(screen.getByRole('combobox', { name: 'ボード' })).toHaveValue('board-new'),
+      )
+      expect(screen.queryByRole('region', { name: '未着手' })).not.toBeInTheDocument()
+      expect(screen.getByLabelText('リスト名')).toBeInTheDocument()
+      expect(input).toHaveValue('')
+    })
+
+    it('does not submit a blank name', async () => {
+      stubCreateBoard()
+      renderApp()
+
+      await userEvent.type(await screen.findByLabelText('ボード名'), '   ')
+
+      expect(screen.getByRole('button', { name: 'ボード作成' })).toBeDisabled()
+    })
+
+    it('shows an error and keeps the input when the API fails', async () => {
+      stubCreateBoard(false)
+      renderApp()
+      const input = await screen.findByLabelText('ボード名')
+
+      await userEvent.type(input, '失敗')
+      await userEvent.click(screen.getByRole('button', { name: 'ボード作成' }))
+
+      expect(await screen.findByRole('alert')).toHaveTextContent('ボードを作成できませんでした')
+      expect(input).toHaveValue('失敗')
+    })
+  })
 })

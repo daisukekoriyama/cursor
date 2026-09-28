@@ -9,6 +9,7 @@ import {
 } from './api/queries'
 import styles from './App.module.css'
 import { Board } from './components/Board'
+import { AddBoardForm } from './components/AddBoardForm'
 import { BoardSelect } from './components/BoardSelect'
 import { SearchBar } from './components/SearchBar'
 import { useDebouncedValue } from './hooks/useDebouncedValue'
@@ -41,9 +42,12 @@ function App() {
     <div className={styles.app}>
       <header className={styles.header}>
         <h1 className={styles.title}>タスクボード</h1>
-        {boards.data && (
-          <BoardSelect boards={boards.data} selectedId={boardId} onChange={setSelectedBoardId} />
-        )}
+        <div className={styles.boardBar}>
+          {boards.data && (
+            <BoardSelect boards={boards.data} selectedId={boardId} onChange={setSelectedBoardId} />
+          )}
+          <AddBoardForm onCreated={setSelectedBoardId} />
+        </div>
       </header>
       <SearchBar filters={filters} onChange={setFilters} />
       {error ? (
