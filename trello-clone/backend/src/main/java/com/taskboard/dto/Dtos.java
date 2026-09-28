@@ -13,7 +13,8 @@ public final class Dtos {
     public record BoardSummary(UUID id, String name) {
     }
 
-    public record ListResponse(UUID id, UUID boardId, String name, int order) {
+    /** done は完了リストかどうか。ここへ移したカードには completedAt が自動で入る。 */
+    public record ListResponse(UUID id, UUID boardId, String name, int order, boolean done) {
     }
 
     public record SubtaskResponse(UUID id, UUID cardId, String text, boolean done) {
@@ -38,7 +39,7 @@ public final class Dtos {
     public record CreateListRequest(@NotBlank(message = "name is required") String name) {
     }
 
-    public record UpdateListRequest(String name, Integer order) {
+    public record UpdateListRequest(String name, Integer order, Boolean done) {
     }
 
     /** due は "yyyy-MM-dd"。省略または空文字は期限なし。 */

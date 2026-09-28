@@ -122,6 +122,9 @@ public class TaskboardService {
         if (request.order() != null) {
             list.setSortOrder(request.order());
         }
+        if (request.done() != null) {
+            list.setDone(request.done());
+        }
         return toResponse(list);
     }
 
@@ -133,12 +136,13 @@ public class TaskboardService {
     }
 
     public CardResponse createCard(UUID listId, CreateCardRequest request) {
-        if (!lists.existsById(listId)) {
-            throw new NotFoundException("list not found");
-        }
+        TaskList list = lists.findById(listId).orElseThrow(notFound("list"));
         int order = cards.findMaxSortOrder(listId).map(max -> max + 1).orElse(0);
-        Card card = cards.save(new Card(listId, request.text().trim(), parseDate(request.due(), "due"), order));
-        return toResponse(card, List.of());
+        Card card = new Card(listId, request.text().trim(), parseDate(request.due(), "due"), order);
+        if (list.isDone()) {
+            card.setCompletedAt(LocalDate.now());
+        }
+        return toResponse(cards.save(card), List.of());
     }
 
     public CardResponse updateCard(UUID cardId, UpdateCardRequest request) {
@@ -149,18 +153,16 @@ public class TaskboardService {
         if (request.due() != null) {
             card.setDue(parseDate(request.due(), "due"));
         }
+        if (request.listId() != null) {
+            TaskList target = lists.findById(request.listId())
+                    .orElseThrow(() -> new BadRequestException("listId not found"));
+            if (!request.listId().equals(card.getListId())) {
+                moveCard(card, target, request.order() == null);
+            }
+        }
+        // completedAt を明示したときは、移動による自動設定より優先する
         if (request.completedAt() != null) {
             card.setCompletedAt(parseDate(request.completedAt(), "completedAt"));
-        }
-        if (request.listId() != null) {
-            if (!lists.existsById(request.listId())) {
-                throw new BadRequestException("listId not found");
-            }
-            // order を省略して別のリストへ移すときは、移動先の末尾に置く
-            if (request.order() == null && !request.listId().equals(card.getListId())) {
-                card.setSortOrder(cards.findMaxSortOrder(request.listId()).map(max -> max + 1).orElse(0));
-            }
-            card.setListId(request.listId());
         }
         if (request.order() != null) {
             card.setSortOrder(request.order());
@@ -204,6 +206,25 @@ public class TaskboardService {
         subtasks.deleteById(subtaskId);
     }
 
+    /**
+     * 別のリストへ移す。完了リストへ入るときは終了日(空のときだけ今日)を入れ、完了リストから
+     * 完了でないリストへ出るときは終了日を消す。append が true なら移動先の末尾に置く。
+     */
+    private void moveCard(Card card, TaskList target, boolean append) {
+        boolean fromDone = lists.findById(card.getListId()).map(TaskList::isDone).orElse(false);
+        if (append) {
+            card.setSortOrder(cards.findMaxSortOrder(target.getId()).map(max -> max + 1).orElse(0));
+        }
+        if (target.isDone()) {
+            if (card.getCompletedAt() == null) {
+                card.setCompletedAt(LocalDate.now());
+            }
+        } else if (fromDone) {
+            card.setCompletedAt(null);
+        }
+        card.setListId(target.getId());
+    }
+
     private Supplier<NotFoundException> notFound(String what) {
         return () -> new NotFoundException(what + " not found");
     }
@@ -228,7 +249,7 @@ public class TaskboardService {
     }
 
     private ListResponse toResponse(TaskList list) {
-        return new ListResponse(list.getId(), list.getBoardId(), list.getName(), list.getSortOrder());
+        return new ListResponse(list.getId(), list.getBoardId(), list.getName(), list.getSortOrder(), list.isDone());
     }
 
     private CardResponse toResponse(Card card, List<SubtaskResponse> cardSubtasks) {

@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.jayway.jsonpath.JsonPath;
+import java.time.LocalDate;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +40,15 @@ class TaskboardApiTest {
     void defaultBoardIsSeededWithThreeLists() {
         Integer count = jdbc.queryForObject(
                 "select count(*) from lists l join boards b on b.id = l.board_id where b.name = 'マイボード'",
+                Integer.class);
+        assertThat(count).isEqualTo(3);
+    }
+
+    @Test
+    void onlyTheSeededDoneListIsFlaggedAsDone() {
+        Integer count = jdbc.queryForObject(
+                "select count(*) from lists l join boards b on b.id = l.board_id"
+                        + " where b.name = 'マイボード' and l.is_done = (l.name = '完了')",
                 Integer.class);
         assertThat(count).isEqualTo(3);
     }
@@ -172,6 +182,74 @@ class TaskboardApiTest {
     }
 
     @Test
+    void doneFlagOnAListDefaultsToFalseAndCanBeChanged() throws Exception {
+        String boardId = createId("/boards", "{\"name\":\"test-done-flag\"}");
+        String listId = createId("/boards/" + boardId + "/lists", "{\"name\":\"L\"}");
+
+        mvc.perform(get("/boards/" + boardId))
+                .andExpect(jsonPath("$.lists[0].done").value(false));
+
+        mvc.perform(patch("/lists/" + listId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"done\":true}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.done").value(true))
+                .andExpect(jsonPath("$.name").value("L"));
+
+        // done を省略した更新では変わらない
+        mvc.perform(patch("/lists/" + listId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"L2\"}"))
+                .andExpect(jsonPath("$.done").value(true));
+    }
+
+    @Test
+    void movingCardsInAndOutOfADoneListSetsAndClearsCompletedAt() throws Exception {
+        String today = LocalDate.now().toString();
+        String boardId = createId("/boards", "{\"name\":\"test-done-move\"}");
+        String todoId = createId("/boards/" + boardId + "/lists", "{\"name\":\"todo\"}");
+        String doneId = createId("/boards/" + boardId + "/lists", "{\"name\":\"done\"}");
+        String otherDoneId = createId("/boards/" + boardId + "/lists", "{\"name\":\"done2\"}");
+        markDone(doneId);
+        markDone(otherDoneId);
+        String cardId = createId("/lists/" + todoId + "/cards", "{\"text\":\"a\"}");
+
+        // 完了リストへ入ると今日の日付が入り、検索でも完了として見つかる
+        patchCard(cardId, "{\"listId\":\"" + doneId + "\"}").andExpect(jsonPath("$.completedAt").value(today));
+        mvc.perform(get("/cards").param("boardId", boardId).param("completed", "true"))
+                .andExpect(jsonPath("$.length()").value(1));
+
+        // 完了リスト同士の移動では終了日を変えない
+        jdbc.update("update cards set completed_at = date '2026-01-02' where id = ?::uuid", cardId);
+        patchCard(cardId, "{\"listId\":\"" + otherDoneId + "\"}").andExpect(jsonPath("$.completedAt").value("2026-01-02"));
+
+        // 完了でないリストへ出ると消える
+        patchCard(cardId, "{\"listId\":\"" + todoId + "\"}").andExpect(jsonPath("$.completedAt").doesNotExist());
+        mvc.perform(get("/cards").param("boardId", boardId).param("completed", "false"))
+                .andExpect(jsonPath("$.length()").value(1));
+
+        // completedAt を明示したときは自動設定より優先する
+        patchCard(cardId, "{\"listId\":\"" + doneId + "\",\"completedAt\":\"2026-03-04\"}")
+                .andExpect(jsonPath("$.completedAt").value("2026-03-04"));
+        patchCard(cardId, "{\"listId\":\"" + todoId + "\",\"completedAt\":\"2026-03-04\"}")
+                .andExpect(jsonPath("$.completedAt").value("2026-03-04"));
+    }
+
+    @Test
+    void aCardCreatedDirectlyInADoneListIsCompletedToday() throws Exception {
+        String boardId = createId("/boards", "{\"name\":\"test-done-create\"}");
+        String doneId = createId("/boards/" + boardId + "/lists", "{\"name\":\"done\"}");
+        String todoId = createId("/boards/" + boardId + "/lists", "{\"name\":\"todo\"}");
+        markDone(doneId);
+
+        mvc.perform(post("/lists/" + doneId + "/cards").contentType(MediaType.APPLICATION_JSON).content("{\"text\":\"x\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.completedAt").value(LocalDate.now().toString()));
+        mvc.perform(post("/lists/" + todoId + "/cards").contentType(MediaType.APPLICATION_JSON).content("{\"text\":\"y\"}"))
+                .andExpect(jsonPath("$.completedAt").doesNotExist());
+    }
+
+    @Test
     void invalidInputIsRejectedWithA400AndMessage() throws Exception {
         mvc.perform(post("/boards").contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"  \"}"))
                 .andExpect(status().isBadRequest())
@@ -284,6 +362,18 @@ class TaskboardApiTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(0));
         mvc.perform(get("/cards").param("boardId", "bad")).andExpect(status().isBadRequest());
+    }
+
+    private void markDone(String listId) throws Exception {
+        mvc.perform(patch("/lists/" + listId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"done\":true}"))
+                .andExpect(status().isOk());
+    }
+
+    private org.springframework.test.web.servlet.ResultActions patchCard(String cardId, String json) throws Exception {
+        return mvc.perform(patch("/cards/" + cardId).contentType(MediaType.APPLICATION_JSON).content(json))
+                .andExpect(status().isOk());
     }
 
     private String createId(String url, String json) throws Exception {
