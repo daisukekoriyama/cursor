@@ -42,6 +42,16 @@ CREATE DATABASE taskboard_test OWNER taskboard ENCODING 'UTF8' TEMPLATE template
 ./mvnw test
 ```
 
+## 開発用テストデータ
+
+`dev-data/seed-test-data.sql` は動作確認用のサンプルデータ(Flywayのマイグレーションではない)。何度実行しても同じ状態になる。
+アプリを一度起動してテーブルを作ってから流し込む。
+
+```
+docker exec -i taskboard-pg psql -U taskboard -d taskboard < dev-data/seed-test-data.sql
+curl "localhost:8080/cards?boardId=00000000-0000-4000-8000-000000000001&keyword=api"
+```
+
 ## 設定(環境変数)
 
 | 環境変数 | 既定値 |
