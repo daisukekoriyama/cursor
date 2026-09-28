@@ -10,6 +10,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.jayway.jsonpath.JsonPath;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -250,6 +252,81 @@ class TaskboardApiTest {
     }
 
     @Test
+    void aBoardStartsWithoutAnUpdatedAtAndReadsDoNotSetIt() throws Exception {
+        String boardId = createId("/boards", "{\"name\":\"test-updated-none\"}");
+        String listId = createId("/boards/" + boardId + "/lists", "{\"name\":\"L\"}");
+        String cardId = createId("/lists/" + listId + "/cards", "{\"text\":\"a\"}");
+
+        // createBoard 自体では更新されず、中身を変えたときに初めて入る(ここでは上の2つの作成で入っている)
+        String other = createId("/boards", "{\"name\":\"test-updated-other\"}");
+        mvc.perform(get("/boards/" + other))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.updatedAt").doesNotExist());
+        assertThat(updatedAt(other)).isNull();
+
+        // 読み取りでは変わらない
+        resetUpdatedAt(boardId);
+        mvc.perform(get("/boards/" + boardId)).andExpect(status().isOk());
+        mvc.perform(get("/cards/" + cardId)).andExpect(status().isOk());
+        mvc.perform(get("/cards").param("boardId", boardId)).andExpect(status().isOk());
+        mvc.perform(get("/boards")).andExpect(status().isOk());
+        assertThat(updatedAt(boardId)).isEqualTo(LONG_AGO);
+    }
+
+    @Test
+    void everyWriteToTheContentOfABoardRecordsItsUpdatedAt() throws Exception {
+        String boardId = createId("/boards", "{\"name\":\"test-updated\"}");
+        String[] ids = new String[4]; // list, card, subtask, second card
+
+        assertTouches(boardId, () -> ids[0] = createId("/boards/" + boardId + "/lists", "{\"name\":\"L\"}"));
+        assertTouches(boardId, () -> patchOk("/lists/" + ids[0], "{\"name\":\"L2\"}"));
+        assertTouches(boardId, () -> ids[1] = createId("/lists/" + ids[0] + "/cards", "{\"text\":\"a\"}"));
+        assertTouches(boardId, () -> patchOk("/cards/" + ids[1], "{\"text\":\"b\"}"));
+        assertTouches(boardId, () -> ids[2] = createId("/cards/" + ids[1] + "/subtasks", "{\"text\":\"s\"}"));
+        assertTouches(boardId, () -> patchOk("/subtasks/" + ids[2], "{\"done\":true}"));
+        assertTouches(boardId, () -> deleteOk("/subtasks/" + ids[2]));
+        assertTouches(boardId, () -> ids[3] = createId("/lists/" + ids[0] + "/cards", "{\"text\":\"c\"}"));
+        assertTouches(boardId, () -> deleteOk("/cards/" + ids[3]));
+        assertTouches(boardId, () -> deleteOk("/lists/" + ids[0]));
+
+        // ボード取得のレスポンスに、更新日時(ISO 8601の文字列)が含まれる
+        mvc.perform(get("/boards/" + boardId))
+                .andExpect(jsonPath("$.updatedAt").isString());
+    }
+
+    @Test
+    void movingACardToAnotherBoardsListRecordsBothBoards() throws Exception {
+        String boardA = createId("/boards", "{\"name\":\"test-updated-a\"}");
+        String boardB = createId("/boards", "{\"name\":\"test-updated-b\"}");
+        String listA = createId("/boards/" + boardA + "/lists", "{\"name\":\"A\"}");
+        String listB = createId("/boards/" + boardB + "/lists", "{\"name\":\"B\"}");
+        String cardId = createId("/lists/" + listA + "/cards", "{\"text\":\"a\"}");
+        resetUpdatedAt(boardA);
+        resetUpdatedAt(boardB);
+
+        patchOk("/cards/" + cardId, "{\"listId\":\"" + listB + "\"}");
+
+        assertThat(updatedAt(boardA)).isAfter(LONG_AGO);
+        assertThat(updatedAt(boardB)).isAfter(LONG_AGO);
+    }
+
+    @Test
+    void aRejectedWriteDoesNotRecordAnUpdate() throws Exception {
+        String boardId = createId("/boards", "{\"name\":\"test-updated-rejected\"}");
+        String listId = createId("/boards/" + boardId + "/lists", "{\"name\":\"L\"}");
+        resetUpdatedAt(boardId);
+
+        mvc.perform(post("/boards/" + boardId + "/lists")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\" \"}"))
+                .andExpect(status().isBadRequest());
+        mvc.perform(delete("/lists/" + UUID.randomUUID())).andExpect(status().isNotFound());
+
+        assertThat(updatedAt(boardId)).isEqualTo(LONG_AGO);
+        assertThat(listId).isNotNull();
+    }
+
+    @Test
     void invalidInputIsRejectedWithA400AndMessage() throws Exception {
         mvc.perform(post("/boards").contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"  \"}"))
                 .andExpect(status().isBadRequest())
@@ -374,6 +451,36 @@ class TaskboardApiTest {
     private org.springframework.test.web.servlet.ResultActions patchCard(String cardId, String json) throws Exception {
         return mvc.perform(patch("/cards/" + cardId).contentType(MediaType.APPLICATION_JSON).content(json))
                 .andExpect(status().isOk());
+    }
+
+    private static final OffsetDateTime LONG_AGO = OffsetDateTime.parse("2000-01-01T00:00:00Z");
+
+    private OffsetDateTime updatedAt(String boardId) {
+        return jdbc.queryForObject(
+                "select updated_at from boards where id = ?::uuid", OffsetDateTime.class, boardId);
+    }
+
+    private void resetUpdatedAt(String boardId) {
+        jdbc.update("update boards set updated_at = ?::timestamptz where id = ?::uuid", LONG_AGO.toString(), boardId);
+    }
+
+    private interface Action {
+        void run() throws Exception;
+    }
+
+    /** 過去の日時に戻してから操作し、更新日時が新しくなったことを確かめる。 */
+    private void assertTouches(String boardId, Action action) throws Exception {
+        resetUpdatedAt(boardId);
+        action.run();
+        assertThat(updatedAt(boardId)).isAfter(LONG_AGO);
+    }
+
+    private void patchOk(String url, String json) throws Exception {
+        mvc.perform(patch(url).contentType(MediaType.APPLICATION_JSON).content(json)).andExpect(status().isOk());
+    }
+
+    private void deleteOk(String url) throws Exception {
+        mvc.perform(delete(url)).andExpect(status().isNoContent());
     }
 
     private String createId(String url, String json) throws Exception {

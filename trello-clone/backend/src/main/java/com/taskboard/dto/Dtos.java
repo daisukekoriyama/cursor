@@ -1,6 +1,7 @@
 package com.taskboard.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -30,7 +31,9 @@ public final class Dtos {
             List<SubtaskResponse> subtasks) {
     }
 
-    public record BoardDetail(UUID id, String name, List<ListResponse> lists, List<CardResponse> cards) {
+    /** updatedAt は、リスト・カード・小項目を最後に変更した日時(ISO 8601)。まだ変更がなければ null。 */
+    public record BoardDetail(
+            UUID id, String name, List<ListResponse> lists, List<CardResponse> cards, Instant updatedAt) {
     }
 
     public record CreateBoardRequest(@NotBlank(message = "name is required") String name) {

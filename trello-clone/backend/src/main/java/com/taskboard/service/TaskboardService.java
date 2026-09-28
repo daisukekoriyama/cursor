@@ -20,6 +20,7 @@ import com.taskboard.repository.BoardRepository;
 import com.taskboard.repository.CardRepository;
 import com.taskboard.repository.SubtaskRepository;
 import com.taskboard.repository.TaskListRepository;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.List;
@@ -79,7 +80,8 @@ public class TaskboardService {
                 boardLists.stream().map(this::toResponse).toList(),
                 boardCards.stream()
                         .map(c -> toResponse(c, subtasksByCard.getOrDefault(c.getId(), List.of())))
-                        .toList());
+                        .toList(),
+                board.getUpdatedAt());
     }
 
     @Transactional(readOnly = true)
@@ -111,6 +113,7 @@ public class TaskboardService {
             throw new NotFoundException("board not found");
         }
         int order = lists.findMaxSortOrder(boardId).map(max -> max + 1).orElse(0);
+        touchBoard(boardId);
         return toResponse(lists.save(new TaskList(boardId, request.name().trim(), order)));
     }
 
@@ -125,13 +128,13 @@ public class TaskboardService {
         if (request.done() != null) {
             list.setDone(request.done());
         }
+        touchBoard(list.getBoardId());
         return toResponse(list);
     }
 
     public void deleteList(UUID listId) {
-        if (!lists.existsById(listId)) {
-            throw new NotFoundException("list not found");
-        }
+        TaskList list = lists.findById(listId).orElseThrow(notFound("list"));
+        touchBoard(list.getBoardId());
         lists.deleteById(listId);
     }
 
@@ -142,11 +145,13 @@ public class TaskboardService {
         if (list.isDone()) {
             card.setCompletedAt(LocalDate.now());
         }
+        touchBoard(list.getBoardId());
         return toResponse(cards.save(card), List.of());
     }
 
     public CardResponse updateCard(UUID cardId, UpdateCardRequest request) {
         Card card = cards.findById(cardId).orElseThrow(notFound("card"));
+        UUID fromListId = card.getListId();
         if (request.text() != null) {
             card.setText(requireText(request.text(), "text"));
         }
@@ -167,6 +172,9 @@ public class TaskboardService {
         if (request.order() != null) {
             card.setSortOrder(request.order());
         }
+        // 別のボードのリストへ移したときは、移動元と移動先の両方を更新する
+        touchBoardOfList(fromListId);
+        touchBoardOfList(card.getListId());
         List<SubtaskResponse> cardSubtasks = subtasks.findByCardIdInOrderBySortOrderAsc(List.of(cardId)).stream()
                 .map(this::toResponse)
                 .toList();
@@ -174,16 +182,14 @@ public class TaskboardService {
     }
 
     public void deleteCard(UUID cardId) {
-        if (!cards.existsById(cardId)) {
-            throw new NotFoundException("card not found");
-        }
+        Card card = cards.findById(cardId).orElseThrow(notFound("card"));
+        touchBoardOfList(card.getListId());
         cards.deleteById(cardId);
     }
 
     public SubtaskResponse createSubtask(UUID cardId, CreateSubtaskRequest request) {
-        if (!cards.existsById(cardId)) {
-            throw new NotFoundException("card not found");
-        }
+        Card card = cards.findById(cardId).orElseThrow(notFound("card"));
+        touchBoardOfList(card.getListId());
         int order = subtasks.findMaxSortOrder(cardId).map(max -> max + 1).orElse(0);
         return toResponse(subtasks.save(new Subtask(cardId, request.text().trim(), order)));
     }
@@ -196,13 +202,13 @@ public class TaskboardService {
         if (request.done() != null) {
             subtask.setDone(request.done());
         }
+        touchBoardOfCard(subtask.getCardId());
         return toResponse(subtask);
     }
 
     public void deleteSubtask(UUID subtaskId) {
-        if (!subtasks.existsById(subtaskId)) {
-            throw new NotFoundException("subtask not found");
-        }
+        Subtask subtask = subtasks.findById(subtaskId).orElseThrow(notFound("subtask"));
+        touchBoardOfCard(subtask.getCardId());
         subtasks.deleteById(subtaskId);
     }
 
@@ -223,6 +229,19 @@ public class TaskboardService {
             card.setCompletedAt(null);
         }
         card.setListId(target.getId());
+    }
+
+    // ボードの中身を変えたときに、最終更新の日時を今にする(ボード自体の作成では呼ばない)
+    private void touchBoard(UUID boardId) {
+        boards.findById(boardId).ifPresent(board -> board.setUpdatedAt(Instant.now()));
+    }
+
+    private void touchBoardOfList(UUID listId) {
+        lists.findById(listId).ifPresent(list -> touchBoard(list.getBoardId()));
+    }
+
+    private void touchBoardOfCard(UUID cardId) {
+        cards.findById(cardId).ifPresent(card -> touchBoardOfList(card.getListId()));
     }
 
     private Supplier<NotFoundException> notFound(String what) {
