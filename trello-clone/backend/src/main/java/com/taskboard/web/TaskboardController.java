@@ -59,7 +59,7 @@ public class TaskboardController {
     }
 
     @PatchMapping("/lists/{listId}")
-    public ListResponse updateList(@PathVariable UUID listId, @RequestBody UpdateListRequest request) {
+    public ListResponse updateList(@PathVariable UUID listId, @Valid @RequestBody UpdateListRequest request) {
         return service.updateList(listId, request);
     }
 

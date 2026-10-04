@@ -1,6 +1,7 @@
 package com.taskboard.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -39,10 +40,20 @@ public final class Dtos {
     public record CreateBoardRequest(@NotBlank(message = "name is required") String name) {
     }
 
-    public record CreateListRequest(@NotBlank(message = "name is required") String name) {
+    /** リスト名の最大文字数。DB の lists.name(VARCHAR(255))に合わせる。 */
+    public static final int LIST_NAME_MAX_LENGTH = 255;
+
+    public record CreateListRequest(
+            @NotBlank(message = "name is required")
+            @Size(max = LIST_NAME_MAX_LENGTH, message = "name must be at most 255 characters")
+            String name) {
     }
 
-    public record UpdateListRequest(String name, Integer order, Boolean done) {
+    public record UpdateListRequest(
+            @Size(max = LIST_NAME_MAX_LENGTH, message = "name must be at most 255 characters")
+            String name,
+            Integer order,
+            Boolean done) {
     }
 
     /** due は "yyyy-MM-dd"。省略または空文字は期限なし。 */
