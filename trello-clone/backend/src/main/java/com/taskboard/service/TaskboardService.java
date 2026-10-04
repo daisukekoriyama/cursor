@@ -120,7 +120,7 @@ public class TaskboardService {
     public ListResponse updateList(UUID listId, UpdateListRequest request) {
         TaskList list = lists.findById(listId).orElseThrow(notFound("list"));
         if (request.name() != null) {
-            list.setName(requireText(request.name(), "name"));
+            list.setName(request.name().trim());
         }
         if (request.order() != null) {
             list.setSortOrder(request.order());
@@ -165,7 +165,7 @@ public class TaskboardService {
         Card card = cards.findById(cardId).orElseThrow(notFound("card"));
         UUID fromListId = card.getListId();
         if (request.text() != null) {
-            card.setText(requireText(request.text(), "text"));
+            card.setText(request.text().trim());
         }
         if (request.due() != null) {
             card.setDue(parseDate(request.due(), "due"));
@@ -208,7 +208,7 @@ public class TaskboardService {
     public SubtaskResponse updateSubtask(UUID subtaskId, UpdateSubtaskRequest request) {
         Subtask subtask = subtasks.findById(subtaskId).orElseThrow(notFound("subtask"));
         if (request.text() != null) {
-            subtask.setText(requireText(request.text(), "text"));
+            subtask.setText(request.text().trim());
         }
         if (request.done() != null) {
             subtask.setDone(request.done());
@@ -257,14 +257,6 @@ public class TaskboardService {
 
     private Supplier<NotFoundException> notFound(String what) {
         return () -> new NotFoundException(what + " not found");
-    }
-
-    private String requireText(String value, String field) {
-        String trimmed = value.trim();
-        if (trimmed.isEmpty()) {
-            throw new BadRequestException(field + " cannot be empty");
-        }
-        return trimmed;
     }
 
     private LocalDate parseDate(String value, String field) {
