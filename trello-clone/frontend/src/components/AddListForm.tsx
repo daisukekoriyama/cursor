@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { useCreateList } from '../api/queries'
+import { NAME_MAX_LENGTH } from '../api/limits'
 import styles from './AddListForm.module.css'
 
 interface Props {
@@ -22,6 +23,7 @@ export function AddListForm({ boardId }: Props) {
       <input
         aria-label="リスト名"
         placeholder="リストを追加"
+        maxLength={NAME_MAX_LENGTH}
         value={name}
         onChange={(e) => setName(e.target.value)}
       />

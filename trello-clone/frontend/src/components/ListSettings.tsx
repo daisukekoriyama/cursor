@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useDeleteList, useRenameList, useSetListDone } from '../api/queries'
 import type { ListResponse } from '../api/types'
+import { NAME_MAX_LENGTH } from '../api/limits'
 import styles from './ListSettings.module.css'
 
 interface Props {
@@ -34,6 +35,7 @@ export function ListSettings({ list }: Props) {
         <input
           className={styles.name}
           aria-label="リスト名を編集"
+          maxLength={NAME_MAX_LENGTH}
           value={name}
           onChange={(e) => setName(e.target.value)}
         />

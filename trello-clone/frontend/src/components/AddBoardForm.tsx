@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { useCreateBoard } from '../api/queries'
+import { NAME_MAX_LENGTH } from '../api/limits'
 import styles from './AddBoardForm.module.css'
 
 interface Props {
@@ -28,6 +29,7 @@ export function AddBoardForm({ onCreated }: Props) {
         className={styles.name}
         aria-label="ボード名"
         placeholder="新しいボード名"
+        maxLength={NAME_MAX_LENGTH}
         value={name}
         onChange={(e) => setName(e.target.value)}
       />
