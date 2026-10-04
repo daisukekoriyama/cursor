@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { useCreateCard } from '../api/queries'
+import { FormError } from './FormError'
 import styles from './AddCardForm.module.css'
 
 interface Props {
@@ -45,11 +46,9 @@ export function AddCardForm({ listId }: Props) {
       <button type="submit" disabled={createCard.isPending || text.trim() === ''}>
         追加
       </button>
-      {createCard.isError && (
-        <p role="alert" className={styles.error}>
-          カードを追加できませんでした。
-        </p>
-      )}
+      <FormError error={createCard.error} className={styles.error}>
+        カードを追加できませんでした。
+      </FormError>
     </form>
   )
 }

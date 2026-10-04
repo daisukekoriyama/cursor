@@ -4,6 +4,7 @@ import type { CardResponse, ListResponse } from '../api/types'
 import { isCardDrag, readDraggedCard } from '../utils/cardDrag'
 import { AddCardForm } from './AddCardForm'
 import { CardItem } from './CardItem'
+import { FormError } from './FormError'
 import { ListSettings } from './ListSettings'
 import styles from './ListColumn.module.css'
 
@@ -53,17 +54,15 @@ export function ListColumn({ list, lists, cards }: Props) {
           {editing ? '閉じる' : '編集'}
         </button>
       </h2>
-      {editing && <ListSettings list={list} />}
+      {editing && <ListSettings key={list.name} list={list} />}
       <ul className={styles.cards}>
         {cards.map((card) => (
           <CardItem key={card.id} card={card} lists={lists} />
         ))}
       </ul>
-      {move.isError && (
-        <p role="alert" className={styles.error}>
-          カードを移動できませんでした。
-        </p>
-      )}
+      <FormError error={move.error} className={styles.error}>
+        カードを移動できませんでした。
+      </FormError>
       <AddCardForm listId={list.id} />
     </section>
   )
