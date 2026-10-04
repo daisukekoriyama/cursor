@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useMoveCard } from '../api/queries'
 import type { CardResponse, ListResponse } from '../api/types'
 import { writeDraggedCard } from '../utils/cardDrag'
+import { FormError } from './FormError'
 import { CardDetail } from './CardDetail'
 import styles from './CardItem.module.css'
 
@@ -72,11 +73,9 @@ export function CardItem({ card, lists }: Props) {
       >
         {open ? '閉じる' : '詳細'}
       </button>
-      {move.isError && (
-        <p role="alert" className={styles.error}>
-          カードを完了にできませんでした。
-        </p>
-      )}
+      <FormError error={move.error} className={styles.error}>
+        カードを完了にできませんでした。
+      </FormError>
       {open && <CardDetail card={card} lists={lists} />}
     </li>
   )

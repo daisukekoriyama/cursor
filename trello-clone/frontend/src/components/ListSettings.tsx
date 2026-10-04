@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { useDeleteList, useRenameList, useSetListDone } from '../api/queries'
 import type { ListResponse } from '../api/types'
 import { NAME_MAX_LENGTH } from '../api/limits'
+import { FormError } from './FormError'
 import styles from './ListSettings.module.css'
 
 interface Props {
@@ -55,15 +56,15 @@ export function ListSettings({ list }: Props) {
       <button type="button" disabled={remove.isPending} onClick={confirmAndDelete}>
         リストを削除
       </button>
-      {(rename.isError || setDone.isError || remove.isError) && (
-        <p role="alert" className={styles.error}>
-          {remove.isError
-            ? 'リストを削除できませんでした。'
-            : rename.isError
-              ? 'リスト名を保存できませんでした。'
-              : '完了リストの設定を変更できませんでした。'}
-        </p>
-      )}
+      <FormError error={rename.error} className={styles.error}>
+        リスト名を保存できませんでした。
+      </FormError>
+      <FormError error={setDone.error} className={styles.error}>
+        完了リストの設定を変更できませんでした。
+      </FormError>
+      <FormError error={remove.error} className={styles.error}>
+        リストを削除できませんでした。
+      </FormError>
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useCreateList } from '../api/queries'
 import { NAME_MAX_LENGTH } from '../api/limits'
+import { FormError } from './FormError'
 import styles from './AddListForm.module.css'
 
 interface Props {
@@ -30,11 +31,9 @@ export function AddListForm({ boardId }: Props) {
       <button type="submit" disabled={createList.isPending || name.trim() === ''}>
         リスト追加
       </button>
-      {createList.isError && (
-        <p role="alert" className={styles.error}>
-          リストを追加できませんでした。
-        </p>
-      )}
+      <FormError error={createList.error} className={styles.error}>
+        リストを追加できませんでした。
+      </FormError>
     </form>
   )
 }

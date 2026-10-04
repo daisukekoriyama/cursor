@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useCreateBoard } from '../api/queries'
 import { NAME_MAX_LENGTH } from '../api/limits'
+import { FormError } from './FormError'
 import styles from './AddBoardForm.module.css'
 
 interface Props {
@@ -36,11 +37,9 @@ export function AddBoardForm({ onCreated }: Props) {
       <button type="submit" disabled={createBoard.isPending || name.trim() === ''}>
         ボード作成
       </button>
-      {createBoard.isError && (
-        <span role="alert" className={styles.error}>
-          ボードを作成できませんでした。
-        </span>
-      )}
+      <FormError error={createBoard.error} as="span" className={styles.error}>
+        ボードを作成できませんでした。
+      </FormError>
     </form>
   )
 }

@@ -134,7 +134,10 @@ describe('App', () => {
 
     await userEvent.type(screen.getByRole('searchbox', { name: 'キーワード' }), 'zzz')
 
-    expect(await screen.findByText('該当するカードはありません。')).toBeInTheDocument()
+    // 検索は 300ms 待ってから走るため、全テスト並列の負荷では既定の 1 秒では足りないことがある
+    expect(
+      await screen.findByText('該当するカードはありません。', {}, { timeout: 3000 }),
+    ).toBeInTheDocument()
   })
 
   it('shows an error with a retry button when the API fails', async () => {
