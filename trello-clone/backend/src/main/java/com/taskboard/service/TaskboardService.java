@@ -159,8 +159,7 @@ public class TaskboardService {
             card.setDue(parseDate(request.due(), "due"));
         }
         if (request.listId() != null) {
-            TaskList target = lists.findById(request.listId())
-                    .orElseThrow(() -> new BadRequestException("listId not found"));
+            TaskList target = lists.findById(request.listId()).orElseThrow(notFound("list"));
             if (!request.listId().equals(card.getListId())) {
                 moveCard(card, target, request.order() == null);
             }
