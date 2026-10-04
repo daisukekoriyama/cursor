@@ -355,8 +355,8 @@ class TaskboardApiTest {
         mvc.perform(patch("/cards/" + cardId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"listId\":\"" + java.util.UUID.randomUUID() + "\"}"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("listId not found"));
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("list not found"));
 
         mvc.perform(post("/boards").contentType(MediaType.APPLICATION_JSON).content("{broken"))
                 .andExpect(status().isBadRequest());
