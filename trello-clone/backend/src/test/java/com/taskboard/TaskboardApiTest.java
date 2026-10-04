@@ -363,6 +363,33 @@ class TaskboardApiTest {
     }
 
     @Test
+    void listNameOver255CharactersIsRejectedWithA400OnCreateAndRename() throws Exception {
+        String boardId = createId("/boards", "{\"name\":\"test-list-length\"}");
+        String longName = "a".repeat(256);
+        String maxName = "a".repeat(255);
+
+        mvc.perform(post("/boards/" + boardId + "/lists")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"" + longName + "\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("name must be at most 255 characters"));
+
+        String listId = createId("/boards/" + boardId + "/lists", "{\"name\":\"" + maxName + "\"}");
+
+        mvc.perform(patch("/lists/" + listId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"" + longName + "\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("name must be at most 255 characters"));
+
+        mvc.perform(patch("/lists/" + listId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"" + maxName + "\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value(maxName));
+    }
+
+    @Test
     void unknownResourcesReturn404AndBadIdsReturn400() throws Exception {
         String unknown = java.util.UUID.randomUUID().toString();
         mvc.perform(get("/boards/" + unknown)).andExpect(status().isNotFound());
