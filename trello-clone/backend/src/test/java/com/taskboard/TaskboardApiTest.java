@@ -417,6 +417,26 @@ class TaskboardApiTest {
     }
 
     @Test
+    void blankTextOnUpdatesIsRejectedWithA400() throws Exception {
+        String boardId = createId("/boards", "{\"name\":\"test-blank-update\"}");
+        String listId = createId("/boards/" + boardId + "/lists", "{\"name\":\"L\"}");
+        String cardId = createId("/lists/" + listId + "/cards", "{\"text\":\"a\"}");
+        String subtaskId = createId("/cards/" + cardId + "/subtasks", "{\"text\":\"s\"}");
+
+        mvc.perform(patch("/subtasks/" + subtaskId).contentType(MediaType.APPLICATION_JSON).content("{\"text\":\"  \"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("text cannot be empty"));
+
+        mvc.perform(patch("/lists/" + listId).contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("name cannot be empty"));
+
+        // 省略(null)は変更しないので通る
+        mvc.perform(patch("/subtasks/" + subtaskId).contentType(MediaType.APPLICATION_JSON).content("{\"done\":true}"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     void unknownResourcesReturn404AndBadIdsReturn400() throws Exception {
         String unknown = java.util.UUID.randomUUID().toString();
         mvc.perform(get("/boards/" + unknown)).andExpect(status().isNotFound());

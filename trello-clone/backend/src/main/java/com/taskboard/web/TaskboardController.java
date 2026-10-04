@@ -90,7 +90,7 @@ public class TaskboardController {
     }
 
     @PatchMapping("/cards/{cardId}")
-    public CardResponse updateCard(@PathVariable UUID cardId, @RequestBody UpdateCardRequest request) {
+    public CardResponse updateCard(@PathVariable UUID cardId, @Valid @RequestBody UpdateCardRequest request) {
         return service.updateCard(cardId, request);
     }
 
@@ -107,7 +107,7 @@ public class TaskboardController {
     }
 
     @PatchMapping("/subtasks/{subtaskId}")
-    public SubtaskResponse updateSubtask(@PathVariable UUID subtaskId, @RequestBody UpdateSubtaskRequest request) {
+    public SubtaskResponse updateSubtask(@PathVariable UUID subtaskId, @Valid @RequestBody UpdateSubtaskRequest request) {
         return service.updateSubtask(subtaskId, request);
     }
 
