@@ -37,10 +37,14 @@ public final class Dtos {
             UUID id, String name, List<ListResponse> lists, List<CardResponse> cards, Instant updatedAt) {
     }
 
-    public record CreateBoardRequest(@NotBlank(message = "name is required") String name) {
+    public record CreateBoardRequest(
+            @NotBlank(message = "name is required")
+            @Size(max = BOARD_NAME_MAX_LENGTH, message = "name must be at most 255 characters")
+            String name) {
     }
 
-    /** リスト名の最大文字数。DB の lists.name(VARCHAR(255))に合わせる。 */
+    /** ボード名・リスト名の最大文字数。DB の boards.name / lists.name(VARCHAR(255))に合わせる。 */
+    public static final int BOARD_NAME_MAX_LENGTH = 255;
     public static final int LIST_NAME_MAX_LENGTH = 255;
 
     public record CreateListRequest(

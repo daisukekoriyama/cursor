@@ -390,6 +390,17 @@ class TaskboardApiTest {
     }
 
     @Test
+    void boardNameOver255CharactersIsRejectedWithA400() throws Exception {
+        mvc.perform(post("/boards")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"" + "b".repeat(256) + "\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("name must be at most 255 characters"));
+
+        createId("/boards", "{\"name\":\"test-" + "b".repeat(250) + "\"}");
+    }
+
+    @Test
     void unknownResourcesReturn404AndBadIdsReturn400() throws Exception {
         String unknown = java.util.UUID.randomUUID().toString();
         mvc.perform(get("/boards/" + unknown)).andExpect(status().isNotFound());
