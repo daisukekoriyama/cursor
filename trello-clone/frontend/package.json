@@ -6,10 +6,13 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "oxlint",
+    "lint": "oxlint --deny-warnings",
     "preview": "vite preview",
     "test": "vitest run",
-    "format": "prettier --write src"
+    "format": "prettier --write src",
+    "typecheck": "tsc -b",
+    "format:check": "prettier --check src",
+    "check": "npm run lint && npm run typecheck && npm run format:check && npm test"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.104.0",

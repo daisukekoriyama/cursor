@@ -37,7 +37,7 @@ export function buildMonths(today: Date, months = 3): CalendarMonth[] {
     return {
       title: `${first.getFullYear()}年${first.getMonth() + 1}月`,
       leadingBlanks: first.getDay(),
-      days: Array.from({ length: daysInMonth }, (_, i) => {
+      days: Array.from({ length: daysInMonth }, (_day, i) => {
         const date = new Date(first.getFullYear(), first.getMonth(), i + 1)
         return { day: i + 1, key: toDateKey(date) }
       }),
