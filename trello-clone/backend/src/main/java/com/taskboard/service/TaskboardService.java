@@ -126,10 +126,22 @@ public class TaskboardService {
             list.setSortOrder(request.order());
         }
         if (request.done() != null) {
+            if (request.done() && !list.isDone()) {
+                requireNoOtherDoneList(list);
+            }
             list.setDone(request.done());
         }
         touchBoard(list.getBoardId());
         return toResponse(list);
+    }
+
+    // 1 ボードに完了リストは 1 つまで。別の完了リストが残っているときは、先に外してもらう
+    private void requireNoOtherDoneList(TaskList list) {
+        boolean another = lists.findByBoardIdOrderBySortOrderAsc(list.getBoardId()).stream()
+                .anyMatch(other -> other.isDone() && !other.getId().equals(list.getId()));
+        if (another) {
+            throw new BadRequestException("board already has a done list");
+        }
     }
 
     public void deleteList(UUID listId) {

@@ -211,19 +211,13 @@ class TaskboardApiTest {
         String boardId = createId("/boards", "{\"name\":\"test-done-move\"}");
         String todoId = createId("/boards/" + boardId + "/lists", "{\"name\":\"todo\"}");
         String doneId = createId("/boards/" + boardId + "/lists", "{\"name\":\"done\"}");
-        String otherDoneId = createId("/boards/" + boardId + "/lists", "{\"name\":\"done2\"}");
         markDone(doneId);
-        markDone(otherDoneId);
         String cardId = createId("/lists/" + todoId + "/cards", "{\"text\":\"a\"}");
 
         // 完了リストへ入ると今日の日付が入り、検索でも完了として見つかる
         patchCard(cardId, "{\"listId\":\"" + doneId + "\"}").andExpect(jsonPath("$.completedAt").value(today));
         mvc.perform(get("/cards").param("boardId", boardId).param("completed", "true"))
                 .andExpect(jsonPath("$.length()").value(1));
-
-        // 完了リスト同士の移動では終了日を変えない
-        jdbc.update("update cards set completed_at = date '2026-01-02' where id = ?::uuid", cardId);
-        patchCard(cardId, "{\"listId\":\"" + otherDoneId + "\"}").andExpect(jsonPath("$.completedAt").value("2026-01-02"));
 
         // 完了でないリストへ出ると消える
         patchCard(cardId, "{\"listId\":\"" + todoId + "\"}").andExpect(jsonPath("$.completedAt").doesNotExist());
@@ -401,6 +395,28 @@ class TaskboardApiTest {
     }
 
     @Test
+    void aBoardCanHaveOnlyOneDoneList() throws Exception {
+        String boardId = createId("/boards", "{\"name\":\"test-one-done\"}");
+        String firstId = createId("/boards/" + boardId + "/lists", "{\"name\":\"first\"}");
+        String secondId = createId("/boards/" + boardId + "/lists", "{\"name\":\"second\"}");
+        markDone(firstId);
+
+        mvc.perform(patch("/lists/" + secondId).contentType(MediaType.APPLICATION_JSON).content("{\"done\":true}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("board already has a done list"));
+
+        // 外してからなら、別のリストを完了リストにできる
+        markNotDone(firstId);
+        markDone(secondId);
+        mvc.perform(get("/boards/" + boardId))
+                .andExpect(jsonPath("$.lists[0].done").value(false))
+                .andExpect(jsonPath("$.lists[1].done").value(true));
+
+        // 完了リストを完了でなくする操作は、そのまま成功する
+        markNotDone(secondId);
+    }
+
+    @Test
     void unknownResourcesReturn404AndBadIdsReturn400() throws Exception {
         String unknown = java.util.UUID.randomUUID().toString();
         mvc.perform(get("/boards/" + unknown)).andExpect(status().isNotFound());
@@ -483,6 +499,13 @@ class TaskboardApiTest {
         mvc.perform(patch("/lists/" + listId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"done\":true}"))
+                .andExpect(status().isOk());
+    }
+
+    private void markNotDone(String listId) throws Exception {
+        mvc.perform(patch("/lists/" + listId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"done\":false}"))
                 .andExpect(status().isOk());
     }
 
