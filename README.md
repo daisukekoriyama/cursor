@@ -192,6 +192,7 @@ Claude Code で開発する場合は、`.claude/` のフックとスキルが次
 | [backend/README.md](trello-clone/backend/README.md) | バックエンドの起動・DB準備・設定(環境変数) |
 | [frontend/README.md](trello-clone/frontend/README.md) | フロントの起動・コマンド・バックエンドとの接続 |
 | [backend-node/README.md](trello-clone/backend-node/README.md) | 旧バックエンド(参考実装) |
+| [AWS デプロイガイド](docs/aws-deploy-guide.md) | AWS CLI + Terraform で AWS に構築・デプロイする手順と解説(初心者向け。コードは未実装) |
 | [CLAUDE.md](CLAUDE.md) | Issue / ブランチ / コミット / PR / 固定ポートのルール |
 
 ## 今後の予定
